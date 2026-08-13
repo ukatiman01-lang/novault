@@ -89,6 +89,11 @@
   }
 }
 
+::selection {
+  background: oklch(0.72 0.17 162 / 30%);
+  color: oklch(0.98 0 0);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -211,4 +216,47 @@
   height: 2px;
   background: linear-gradient(90deg, transparent, oklch(0.72 0.17 162 / 0.15), transparent);
   animation: scan 4s linear infinite;
+}
+
+/* Dashed line flow for architecture diagram */
+@keyframes dash-flow {
+  to { background-position: 24px 0; }
+}
+@keyframes dash-flow-v {
+  to { background-position: 0 24px; }
+}
+.dash-line-h {
+  background-image: repeating-linear-gradient(90deg, oklch(0.72 0.17 162 / 0.3) 0px, oklch(0.72 0.17 162 / 0.3) 6px, transparent 6px, transparent 12px);
+  animation: dash-flow 1s linear infinite;
+}
+.dash-line-v {
+  background-image: repeating-linear-gradient(180deg, oklch(0.72 0.17 162 / 0.3) 0px, oklch(0.72 0.17 162 / 0.3) 6px, transparent 6px, transparent 12px);
+  animation: dash-flow-v 1s linear infinite;
+}
+
+/* Animated CTA glow border */
+@keyframes cta-glow-spin {
+  to { transform: rotate(360deg); }
+}
+.animate-cta-glow {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  padding: 1px;
+}
+.animate-cta-glow::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    oklch(0.72 0.17 162 / 0.7),
+    transparent 15%,
+    transparent 40%,
+    oklch(0.72 0.17 162 / 0.3),
+    transparent 65%,
+    transparent 85%,
+    oklch(0.72 0.17 162 / 0.7)
+  );
+  animation: cta-glow-spin 3s linear infinite;
 }

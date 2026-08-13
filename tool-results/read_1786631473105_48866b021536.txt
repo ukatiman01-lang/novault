@@ -1,0 +1,1865 @@
+     1→'use client';
+     2→
+     3→import { useCallback, useEffect, useRef, useState } from 'react';
+     4→import Image from 'next/image';
+     5→import { motion, AnimatePresence } from 'framer-motion';
+     6→import {
+     7→  Shield,
+     8→  Lock,
+     9→  FileCode2,
+    10→  Network,
+    11→  Code2,
+    12→  Eye,
+    13→  Menu,
+    14→  ArrowRight,
+    15→  ArrowUp,
+    16→  ExternalLink,
+    17→  CheckCircle2,
+    18→  Copy,
+    19→  Github,
+    20→  Coins,
+    21→  HeartPulse,
+    22→  Building2,
+    23→  Vote,
+    24→} from 'lucide-react';
+    25→import { toast } from 'sonner';
+    26→import { Button } from '@/components/ui/button';
+    27→import { Badge } from '@/components/ui/badge';
+    28→import {
+    29→  Dialog,
+    30→  DialogContent,
+    31→  DialogHeader,
+    32→  DialogTitle,
+    33→  DialogDescription,
+    34→} from '@/components/ui/dialog';
+    35→import {
+    36→  Sheet,
+    37→  SheetTrigger,
+    38→  SheetContent,
+    39→  SheetHeader,
+    40→  SheetTitle,
+    41→} from '@/components/ui/sheet';
+    42→import { Separator } from '@/components/ui/separator';
+    43→import {
+    44→  Accordion,
+    45→  AccordionItem,
+    46→  AccordionTrigger,
+    47→  AccordionContent,
+    48→} from '@/components/ui/accordion';
+    49→import { Input } from '@/components/ui/input';
+    50→import { Textarea } from '@/components/ui/textarea';
+    51→import {
+    52→  Tabs,
+    53→  TabsList,
+    54→  TabsTrigger,
+    55→  TabsContent,
+    56→} from '@/components/ui/tabs';
+    57→
+    58→/* ------------------------------------------------------------------ */
+    59→/*  Animation helpers                                                 */
+    60→/* ------------------------------------------------------------------ */
+    61→
+    62→const fadeUp = {
+    63→  hidden: { opacity: 0, y: 24 },
+    64→  visible: (i: number) => ({
+    65→    opacity: 1,
+    66→    y: 0,
+    67→    transition: { delay: i * 0.12, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
+    68→  }),
+    69→};
+    70→
+    71→function useInView(threshold = 0.15) {
+    72→  const ref = useRef<HTMLDivElement>(null);
+    73→  const [inView, setInView] = useState(false);
+    74→  useEffect(() => {
+    75→    const el = ref.current;
+    76→    if (!el) return;
+    77→    const obs = new IntersectionObserver(
+    78→      ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
+    79→      { threshold }
+    80→    );
+    81→    obs.observe(el);
+    82→    return () => obs.disconnect();
+    83→  }, [threshold]);
+    84→  return { ref, inView };
+    85→}
+    86→
+    87→/* ------------------------------------------------------------------ */
+    88→/*  Data                                                               */
+    89→/* ------------------------------------------------------------------ */
+    90→
+    91→const NAV_LINKS = [
+    92→  { label: 'Features', href: '#features' },
+    93→  { label: 'Use Cases', href: '#usecases' },
+    94→  { label: 'Protocol', href: '#protocol' },
+    95→  { label: 'Developers', href: '#developers' },
+    96→  { label: 'FAQ', href: '#faq' },
+    97→];
+    98→
+    99→const TECH_STACK = [
+   100→  'Ethereum',
+   101→  'Zero-Knowledge Proofs',
+   102→  'Solidity',
+   103→  'Rust',
+   104→  'Cryptographic Primitives',
+   105→];
+   106→
+   107→const FEATURES = [
+   108→  { icon: Shield, title: 'Zero-Knowledge Proofs', desc: 'Prove statements without revealing underlying data. Mathematical guarantees of correctness with complete privacy.' },
+   109→  { icon: Lock, title: 'Encrypted Computation', desc: 'Compute on encrypted data, never decrypt. Your inputs remain confidential through every stage of processing.' },
+   110→  { icon: FileCode2, title: 'Private Smart Contracts', desc: 'Execute logic without exposing state. Smart contracts that keep transaction details hidden by default.' },
+   111→  { icon: Network, title: 'Cross-Chain Privacy', desc: 'Unified privacy layer across chains. Transfer and verify private state across heterogeneous networks.' },
+   112→  { icon: Code2, title: 'Developer SDK', desc: 'Tools and libraries to build privately. Integrate privacy primitives with a few lines of code.' },
+   113→  { icon: Eye, title: 'Audited & Open Source', desc: 'All code is public, audited by top firms. Transparency in our approach, privacy in your data.' },
+   114→];
+   115→
+   116→const PROTOCOL_STEPS = [
+   117→  { num: '01', title: 'Encrypt', desc: 'Your data is encrypted client-side before it ever touches the network. No plaintext leaves your machine.', code: 'ZkCipher.encrypt(plaintext, userKey)', icon: Lock },
+   118→  { num: '02', title: 'Prove', desc: 'Zero-knowledge proofs verify correctness without revealing inputs. The network validates computation without learning anything.', code: 'ZkProver.generateProof(ciphertext, witness)', icon: Shield },
+   119→  { num: '03', title: 'Settle', desc: 'Results settle on-chain with cryptographic guarantees. Verifiable outcomes anchored to the base layer.', code: 'vault.settle(proof, commitment, recipient)', icon: FileCode2 },
+   120→];
+   121→
+   122→const FAQ_DATA = [
+   123→  {
+   124→    q: 'What is zero-knowledge proof?',
+   125→    a: 'A cryptographic method that allows one party to prove to another that a statement is true, without revealing any information beyond the validity of the statement itself. In the context of noVault, this means your transactions can be verified without exposing amounts, addresses, or any other sensitive data.',
+   126→  },
+   127→  {
+   128→    q: 'Which blockchain networks does noVault support?',
+   129→    a: 'noVault currently supports Ethereum mainnet and testnet, with Polygon, Arbitrum, and Base integrations in active development. Our cross-chain privacy layer is designed to be chain-agnostic, enabling private state transfer across any EVM-compatible network.',
+   130→  },
+   131→  {
+   132→    q: "Is noVault really open source?",
+   133→    a: "Yes. All of noVault's core cryptographic libraries, protocol contracts, and SDKs are fully open source under MIT/Apache-2.0 dual license. You can review, audit, and contribute to our codebase on GitHub.",
+   134→  },
+   135→  {
+   136→    q: 'How does client-side encryption work?',
+   137→    a: "Before any data leaves your browser, noVault encrypts it using your private key. The encrypted data is then sent to the network where it is processed using advanced cryptographic techniques like fully homomorphic encryption (FHE) and secure multi-party computation (MPC). At no point is your data decrypted on any server.",
+   138→  },
+   139→  {
+   140→    q: 'What are the costs of using noVault?',
+   141→    a: "noVault's core privacy protocol is free to use. You only pay standard gas fees for on-chain transactions. Proof generation is optimized to minimize computational overhead, with most proofs generating in under 4ms at negligible cost.",
+   142→  },
+   143→  {
+   144→    q: 'How do I get started as a developer?',
+   145→    a: "Install our SDK via npm ('@novault/sdk'), check out our documentation, and explore the example contracts in our GitHub repository. Our developer Discord community is also available for real-time support and discussions.",
+   146→  },
+   147→];
+   148→
+   149→const ROADMAP = [
+   150→  {
+   151→    phase: 'Phase 1',
+   152→    title: 'Testnet Launch',
+   153→    desc: 'Core ZK circuit library, encrypted state model, basic SDK',
+   154→    status: 'completed' as const,
+   155→  },
+   156→  {
+   157→    phase: 'Phase 2',
+   158→    title: 'Developer Preview',
+   159→    desc: 'Full SDK release, Solidity integrations, documentation',
+   160→    status: 'completed' as const,
+   161→  },
+   162→  {
+   163→    phase: 'Phase 3',
+   164→    title: 'Security Audits',
+   165→    desc: 'Independent audits by Trail of Bits and OpenZeppelin',
+   166→    status: 'active' as const,
+   167→  },
+   168→  {
+   169→    phase: 'Phase 4',
+   170→    title: 'Mainnet Launch',
+   171→    desc: 'Production deployment, cross-chain bridges, governance',
+   172→    status: 'upcoming' as const,
+   173→  },
+   174→];
+   175→
+   176→const METRICS = [
+   177→  { value: '2.4M+', label: 'Proofs Generated' },
+   178→  { value: '$180M+', label: 'Value Secured' },
+   179→  { value: '12,400+', label: 'Developers' },
+   180→  { value: '99.97%', label: 'Uptime' },
+   181→];
+   182→
+   183→/* ------------------------------------------------------------------ */
+   184→/*  Metric formatters                                                 */
+   185→/* ------------------------------------------------------------------ */
+   186→
+   187→function formatProofs(n: number): string {
+   188→  const m = n / 1_000_000;
+   189→  return `${m.toFixed(1)}M+`;
+   190→}
+   191→function formatValue(n: number): string {
+   192→  const m = n / 1_000_000;
+   193→  return `$${Math.round(m)}M+`;
+   194→}
+   195→function formatDevs(n: number): string {
+   196→  return `${n.toLocaleString()}+`;
+   197→}
+   198→function formatUptime(n: number): string {
+   199→  return `${n.toFixed(2)}%`;
+   200→}
+   201→
+   202→const TEAM_MEMBERS = [
+   203→  { name: 'Alex Chen', role: 'Co-Founder & CEO', bio: 'Former protocol engineer at Ethereum Foundation. ZK circuit design and cryptographic protocol architecture.', socials: { x: '#', github: '#' } },
+   204→  { name: 'Dr. Sarah Kim', role: 'Co-Founder & CTO', bio: 'PhD in cryptographic protocols from MIT. Led privacy research at Trail of Bits for 4 years.', socials: { x: '#', github: '#' } },
+   205→  { name: 'Marcus Webb', role: 'Lead Engineer', bio: 'Core contributor to PLONK proof system. Previously at Consensys and Polygon Zero.', socials: { x: '#', github: '#' } },
+   206→  { name: 'Yuki Tanaka', role: 'Head of Research', bio: 'Published 12 peer-reviewed papers on MPC and FHE. Former research scientist at DFINITY.', socials: { x: '#', github: '#' } },
+   207→];
+   208→
+   209→const PARTNERS = [
+   210→  'Ethereum Foundation',
+   211→  'a16z Crypto',
+   212→  'Paradigm',
+   213→  'Polygon Labs',
+   214→  'Consensys',
+   215→  'Gitcoin',
+   216→];
+   217→
+   218→const MARQUEE_ITEMS = [
+   219→  'Testnet Live',
+   220→  '2.4M+ Proofs Generated',
+   221→  'Audited by Trail of Bits',
+   222→  'Open Source MIT/Apache-2.0',
+   223→  '12,400+ Developers',
+   224→  '99.97% Uptime',
+   225→  'Ethereum + Polygon + Arbitrum',
+   226→];
+   227→
+   228→const USE_CASES = [
+   229→  {
+   230→    tab: 'DeFi',
+   231→    icon: Coins,
+   232→    title: 'Private DeFi',
+   233→    desc: 'Private swaps, lending, and yield strategies. Users can transact without exposing portfolio holdings, transaction amounts, or trading strategies to the public mempool.',
+   234→    stats: ['Private AMM pools', 'Shielded lending protocols', 'Confidential governance votes'],
+   235→  },
+   236→  {
+   237→    tab: 'Healthcare',
+   238→    icon: HeartPulse,
+   239→    title: 'Healthcare Data',
+   240→    desc: 'Enable HIPAA-compliant data sharing between institutions. Prove patient eligibility or treatment outcomes without exposing individual medical records.',
+   241→    stats: ['Encrypted patient records', 'Cross-institution verification', 'Compliance-ready audits'],
+   242→  },
+   243→  {
+   244→    tab: 'Enterprise',
+   245→    icon: Building2,
+   246→    title: 'Enterprise Solutions',
+   247→    desc: 'Private supply chain verification, confidential business analytics, and secure data collaboration between organizations without revealing proprietary information.',
+   248→    stats: ['Supply chain proof', 'Confidential analytics', 'Multi-party computation'],
+   249→  },
+   250→  {
+   251→    tab: 'Governance',
+   252→    icon: Vote,
+   253→    title: 'DAO Governance',
+   254→    desc: 'Commitment-based voting where preferences remain private until the reveal phase. Prevents vote buying and bandwagon effects in decentralized governance.',
+   255→    stats: ['Commit-reveal voting', 'Delegation privacy', 'Quadratic voting support'],
+   256→  },
+   257→];
+   258→
+   259→const SECURITY_ITEMS = [
+   260→  { icon: Shield, title: 'End-to-End Encryption', desc: 'All data is encrypted before leaving the client. Our protocol never sees plaintext.' },
+   261→  { icon: Lock, title: 'Formally Verified Circuits', desc: 'Core ZK circuits verified using CirC and Lean 4 formal methods.' },
+   262→  { icon: CheckCircle2, title: 'Independent Audits', desc: 'Audited by Trail of Bits (2024) and OpenZeppelin (2025). Reports public.' },
+   263→  { icon: FileCode2, title: 'Bug Bounty Program', desc: 'Up to $500K bounty for critical vulnerabilities. Responsible disclosure.' },
+   264→];
+   265→
+   266→const CHANGELOG = [
+   267→  { version: 'v0.3.0', date: 'Jun 2025', title: 'Developer Preview', items: ['Full SDK release with TypeScript support', 'Solidity integration library', 'Interactive documentation portal', 'GitHub CI/CD templates'] },
+   268→  { version: 'v0.2.0', date: 'Mar 2025', title: 'Testnet Expansion', items: ['Polygon and Arbitrum testnet support', 'Cross-chain proof verification', 'Developer dashboard beta', 'FHE module preview'] },
+   269→  { version: 'v0.1.0', date: 'Dec 2024', title: 'Initial Testnet', items: ['Core ZK circuit library', 'Encrypted state model', 'Basic REST API', 'Ethereum Sepolia deployment'] },
+   270→];
+   271→
+   272→const CODE_STRING = `pragma solidity 0.8.24;
+   273→import {@noVault/sdk/"PrivateVault.sol"};
+   274→
+   275→contract EncryptedAssetVault is PrivateVault {
+   276→    using ZkCipher for bytes32;
+   277→
+   278→    function transfer(
+   279→        address to,
+   280→        uint256 amount
+   281→    ) external {
+   282→        // Encrypt inputs client-side
+   283→        Ciphertext ct = ZkCipher.encrypt(amount, msg.sender);
+   284→        // Generate ZK proof of valid transfer
+   285→        Proof proof = ZkProver.proveTransfer(ct, to);
+   286→        // Settle on-chain \u2014 amount never revealed
+   287→        _vault.settle(proof, ct, to);
+   288→    }
+   289→}`;
+   290→
+   291→/* ------------------------------------------------------------------ */
+   292→/*  Terms & Privacy content                                           */
+   293→/* ------------------------------------------------------------------ */
+   294→
+   295→const TERMS_CONTENT = (
+   296→  <div className="space-y-5 text-sm leading-relaxed text-muted-foreground">
+   297→    <p><strong className="text-foreground">1. Acceptance of Terms</strong><br />
+   298→    By accessing or using the noVault platform, services, or any associated software (collectively, the \"Services\"), you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree to these Terms, you may not access or use the Services. We reserve the right to modify these Terms at any time, and continued use of the Services constitutes acceptance of such modifications.</p>
+   299→    <p><strong className="text-foreground">2. Description of Services</strong><br />
+   300→    noVault provides decentralized privacy infrastructure for Web3 applications, including but not limited to zero-knowledge proof generation, encrypted computation services, developer SDKs, and cross-chain privacy protocols. The Services are provided on an \"as is\" and \"as available\" basis. We make no guarantees regarding uptime, availability, or fitness for any particular purpose.</p>
+   301→    <p><strong className="text-foreground">3. User Responsibilities</strong><br />
+   302→    You are solely responsible for maintaining the security of any private keys, credentials, or authentication mechanisms you use in connection with the Services. You agree not to: (a) use the Services for any unlawful purpose; (b) attempt to gain unauthorized access to any portion of the Services; (c) interfere with or disrupt the integrity or performance of the Services; (d) attempt to reverse-engineer, decompile, or disassemble any portion of the Services, except as permitted by applicable law.</p>
+   303→    <p><strong className="text-foreground">4. Intellectual Property</strong><br />
+   304→    All intellectual property rights in the Services, including but not limited to software, documentation, trademarks, and trade secrets, are owned by or licensed to noVault. The open-source components of our codebase are released under their respective licenses, as documented in our public repositories. Nothing in these Terms grants you any rights to the noVault name, logo, or trademarks.</p>
+   305→    <p><strong className="text-foreground">5. Disclaimer of Warranties</strong><br />
+   306→    TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SERVICES ARE PROVIDED \"AS IS\" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE. WE DISCLAIM ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. NO ADVICE OR INFORMATION, WHETHER ORAL OR WRITTEN, OBTAINED FROM NOVAULT OR THROUGH THE SERVICES WILL CREATE ANY WARRANTY NOT EXPRESSLY STATED IN THESE TERMS.</p>
+   307→    <p><strong className="text-foreground">6. Limitation of Liability</strong><br />
+   308→    TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL NOVAULT, ITS AFFILIATES, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE, OR GOODWILL, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF THE SERVICES. OUR TOTAL AGGREGATE LIABILITY SHALL NOT EXCEED THE GREATER OF ONE HUNDRED U.S. DOLLARS ($100) OR THE AMOUNT YOU PAID TO NOVAULT IN THE TWELVE MONTHS PRECEDING THE CLAIM.</p>
+   309→    <p><strong className="text-foreground">7. Governing Law</strong><br />
+   310→    These Terms shall be governed by and construed in accordance with applicable federal laws and the laws of the jurisdiction in which noVault is organized, without regard to conflict of law principles. Any disputes arising under these Terms shall be resolved through binding arbitration in accordance with the rules of the applicable arbitration body.</p>
+   311→    <p><strong className="text-foreground">8. Contact Information</strong><br />
+   312→    For questions about these Terms, please contact us at legal@novault.io or through our official channels on X (@novaultech).</p>
+   313→  </div>
+   314→);
+   315→
+   316→const PRIVACY_CONTENT = (
+   317→  <div className="space-y-5 text-sm leading-relaxed text-muted-foreground">
+   318→    <p><strong className="text-foreground">1. Information We Collect</strong><br />
+   319→    noVault is designed with a privacy-first architecture. We collect minimal data necessary to operate our Services. This may include: (a) anonymized usage metrics such as API call volumes and error rates; (b) public on-chain transaction data that is inherently visible on the blockchain; (c) information you voluntarily provide when contacting our team. We do not collect, store, or have access to the plaintext content of your encrypted data or private keys.</p>
+   320→    <p><strong className="text-foreground">2. Use of Information</strong><br />
+   321→    Any information collected is used solely for the purposes of: (a) maintaining and improving the reliability and performance of the Services; (b) detecting and preventing security incidents or abuse; (c) complying with applicable legal obligations; (d) communicating with you regarding the Services when necessary. We will never sell your personal information to third parties.</p>
+   322→    <p><strong className="text-foreground">3. Data Protection</strong><br />
+   323→    We implement industry-standard security measures to protect any data we process. This includes encryption at rest and in transit, access controls, and regular security audits by independent third-party firms. Our zero-knowledge architecture ensures that sensitive user data remains encrypted and is never exposed to our servers or any third party.</p>
+   324→    <p><strong className="text-foreground">4. Cookies and Tracking</strong><br />
+   325→    Our website may use strictly necessary cookies for basic functionality. We do not use advertising trackers, third-party analytics cookies, or any tracking pixels. Any cookies used are essential for the operation of the site and are not used for behavioral profiling or targeted advertising.</p>
+   326→    <p><strong className="text-foreground">5. Third-Party Services</strong><br />
+   327→    The Services may integrate with or link to third-party blockchain networks, RPC providers, and infrastructure services. Each third-party service is governed by its own privacy policy. We encourage you to review the privacy practices of any third-party services you interact with through our platform. We are not responsible for the data practices of third-party services.</p>
+   328→    <p><strong className="text-foreground">6. Your Rights</strong><br />
+   329→    Depending on your jurisdiction, you may have the right to: (a) access any personal data we hold about you; (b) request correction or deletion of your personal data; (c) object to or restrict processing of your data; (d) request data portability. To exercise any of these rights, please contact us at privacy@novault.io. We will respond to all legitimate requests within thirty (30) days.</p>
+   330→    <p><strong className="text-foreground">7. Changes to This Policy</strong><br />
+   331→    We may update this Privacy Policy from time to time. Material changes will be communicated through our official channels. Your continued use of the Services after any changes constitutes acceptance of the updated policy. We encourage you to review this page periodically for the latest information on our privacy practices.</p>
+   332→    <p><strong className="text-foreground">8. Contact Information</strong><br />
+   333→    For privacy-related inquiries, please contact us at privacy@novault.io or through our official channels on X (@novaultech).</p>
+   334→  </div>
+   335→);
+   336→
+   337→/* ------------------------------------------------------------------ */
+   338→/*  Page Component                                                     */
+   339→/* ------------------------------------------------------------------ */
+   340→
+   341→export default function Home() {
+   342→  const [liveMetrics, setLiveMetrics] = useState<null | Record<string, unknown>>(null);
+   343→  const [termsOpen, setTermsOpen] = useState(false);
+   344→  const [privacyOpen, setPrivacyOpen] = useState(false);
+   345→  const [scrolled, setScrolled] = useState(false);
+   346→  const [scrollProgress, setScrollProgress] = useState(0);
+   347→  const [showBackToTop, setShowBackToTop] = useState(false);
+   348→  const [waitlistEmail, setWaitlistEmail] = useState('');
+   349→  const [copied, setCopied] = useState(false);
+   350→  const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+   351→  const [contactSending, setContactSending] = useState(false);
+   352→  const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
+   353→
+   354→  // Expose dialog openers to window
+   355→  useEffect(() => {
+   356→    (window as unknown as Record<string, unknown>).openTermsDialog = () => setTermsOpen(true);
+   357→    (window as unknown as Record<string, unknown>).openPrivacyDialog = () => setPrivacyOpen(true);
+   358→  }, []);
+   359→
+   360→  // Navbar scroll detection + scroll progress + back-to-top
+   361→  useEffect(() => {
+   362→    const onScroll = () => {
+   363→      const sy = window.scrollY;
+   364→      setScrolled(sy > 20);
+   365→      setShowBackToTop(sy > 400);
+   366→      const docH = document.body.scrollHeight - window.innerHeight;
+   367→      setScrollProgress(docH > 0 ? (sy / docH) * 100 : 0);
+   368→    };
+   369→    window.addEventListener('scroll', onScroll, { passive: true });
+   370→    return () => window.removeEventListener('scroll', onScroll);
+   371→  }, []);
+   372→
+   373→  // Fetch live metrics
+   374→  useEffect(() => {
+   375→    fetch('/api/metrics')
+   376→      .then(r => r.json())
+   377→      .then(setLiveMetrics)
+   378→      .catch(() => {}); // Silently fail, use defaults
+   379→  }, []);
+   380→
+   381→  // Fetch waitlist count
+   382→  useEffect(() => {
+   383→    fetch('/api/waitlist')
+   384→      .then(r => r.json())
+   385→      .then(d => setWaitlistCount(d.count ?? null))
+   386→      .catch(() => {});
+   387→  }, []);
+   388→
+   389→  // Smooth scroll handler
+   390→  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+   391→    e.preventDefault();
+   392→    const el = document.querySelector(href);
+   393→    if (el) el.scrollIntoView({ behavior: 'smooth' });
+   394→  }, []);
+   395→
+   396→  const handleCopyCode = useCallback(() => {
+   397→    navigator.clipboard.writeText(CODE_STRING);
+   398→    setCopied(true);
+   399→    setTimeout(() => setCopied(false), 2000);
+   400→  }, []);
+   401→
+   402→  const handleContact = async () => {
+   403→    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+   404→      toast.error('Please fill in all required fields.');
+   405→      return;
+   406→    }
+   407→    setContactSending(true);
+   408→    try {
+   409→      const res = await fetch('/api/contact', {
+   410→        method: 'POST',
+   411→        headers: { 'Content-Type': 'application/json' },
+   412→        body: JSON.stringify(contactForm),
+   413→      });
+   414→      const data = await res.json();
+   415→      if (data.success) {
+   416→        toast.success('Message sent!', { description: "We'll get back to you within 24 hours." });
+   417→        setContactForm({ name: '', email: '', subject: '', message: '' });
+   418→      } else {
+   419→        toast.error(data.error || 'Something went wrong.');
+   420→      }
+   421→    } catch {
+   422→      toast.error('Failed to send message. Please try again.');
+   423→    }
+   424→    setContactSending(false);
+   425→  };
+   426→
+   427→  const handleWaitlist = useCallback(async () => {
+   428→    if (!waitlistEmail || !waitlistEmail.includes('@')) {
+   429→      toast.error('Please enter a valid email address.');
+   430→      return;
+   431→    }
+   432→    try {
+   433→      const res = await fetch('/api/waitlist', {
+   434→        method: 'POST',
+   435→        headers: { 'Content-Type': 'application/json' },
+   436→        body: JSON.stringify({ email: waitlistEmail }),
+   437→      });
+   438→      const data = await res.json();
+   439→      if (data.success) {
+   440→        setWaitlistCount(data.count);
+   441→        toast.success("You're on the list!", { description: `You're #${data.count} on the list!` });
+   442→        setWaitlistEmail('');
+   443→      } else {
+   444→        toast.error(data.error || 'Something went wrong.');
+   445→      }
+   446→    } catch {
+   447→      toast.error('Failed to join waitlist. Please try again.');
+   448→    }
+   449→  }, [waitlistEmail]);
+   450→
+   451→  return (
+   452→    <div className="relative overflow-hidden flex flex-col min-h-screen">
+   453→      {/* ===== SCROLL PROGRESS BAR ===== */}
+   454→      <div
+   455→        className="fixed top-0 left-0 right-0 z-[60] h-[2px] bg-transparent pointer-events-none"
+   456→      >
+   457→        <div
+   458→          className="h-full bg-primary transition-[width] duration-150 ease-out"
+   459→          style={{ width: `${scrollProgress}%` }}
+   460→        />
+   461→      </div>
+   462→
+   463→      {/* ===== NAVBAR ===== */}
+   464→      <nav
+   465→        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+   466→          scrolled
+   467→            ? 'bg-background/80 backdrop-blur-xl border-b border-border'
+   468→            : 'bg-transparent'
+   469→        }`}
+   470→      >
+   471→        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+   472→          {/* Logo */}
+   473→          <a href="#" className="flex items-center gap-2.5 group">
+   474→            <Image src="/novault-logo.png" alt="noVault" width={32} height={32} className="rounded-sm" />
+   475→            <span className="font-mono font-bold text-lg tracking-tight">
+   476→              no<span className="text-primary">Vault</span>
+   477→            </span>
+   478→          </a>
+   479→
+   480→          {/* Desktop links */}
+   481→          <div className="hidden md:flex items-center gap-1">
+   482→            {NAV_LINKS.map((l) => (
+   483→              <a
+   484→                key={l.href}
+   485→                href={l.href}
+   486→                onClick={(e) => handleNavClick(e, l.href)}
+   487→                className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+   488→              >
+   489→                {l.label}
+   490→              </a>
+   491→            ))}
+   492→            <Button size="sm" className="ml-3">
+   493→              Launch App <ArrowRight className="size-3.5" />
+   494→            </Button>
+   495→          </div>
+   496→
+   497→          {/* Mobile hamburger */}
+   498→          <div className="md:hidden">
+   499→            <Sheet>
+   500→              <SheetTrigger asChild>
+   501→                <Button variant="ghost" size="icon">
+   502→                  <Menu className="size-5" />
+   503→                </Button>
+   504→              </SheetTrigger>
+   505→              <SheetContent side="right" className="w-72">
+   506→                <SheetHeader>
+   507→                  <SheetTitle className="font-mono font-bold">
+   508→                    no<span className="text-primary">Vault</span>
+   509→                  </SheetTitle>
+   510→                </SheetHeader>
+   511→                <div className="flex flex-col gap-1 px-4 mt-4">
+   512→                  {NAV_LINKS.map((l) => (
+   513→                    <a
+   514→                      key={l.href}
+   515→                      href={l.href}
+   516→                      onClick={(e) => handleNavClick(e, l.href)}
+   517→                      className="px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
+   518→                    >
+   519→                      {l.label}
+   520→                    </a>
+   521→                  ))}
+   522→                  <Separator className="my-2" />
+   523→                  <Button className="mt-1">
+   524→                    Launch App <ArrowRight className="size-3.5" />
+   525→                  </Button>
+   526→                </div>
+   527→              </SheetContent>
+   528→            </Sheet>
+   529→          </div>
+   530→        </div>
+   531→      </nav>
+   532→
+   533→      {/* ===== HERO ===== */}
+   534→      <section className="relative min-h-screen flex items-center justify-center noise-overlay">
+   535→        {/* Background image */}
+   536→        <Image
+   537→          src="/hero-bg.png"
+   538→          alt=""
+   539→          fill
+   540→          className="object-cover object-center"
+   541→          priority
+   542→        />
+   543→        {/* Overlay gradient */}
+   544→        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background z-[1]" />
+   545→        {/* S1: Particle/Mesh Network Canvas */}
+   546→        <ParticleMesh className="absolute inset-0 z-[2] pointer-events-none" />
+   547→        {/* Radial glow */}
+   548→        <div className="absolute inset-0 z-[3] bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,oklch(0.72_0.17_162/0.08),transparent)]" />
+   549→        {/* Animated grid overlay */}
+   550→        <div
+   551→          className="absolute inset-0 z-[4] pointer-events-none opacity-[0.03]"
+   552→          style={{
+   553→            backgroundImage:
+   554→              'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
+   555→            backgroundSize: '60px 60px',
+   556→          }}
+   557→        />
+   558→
+   559→        {/* S1: Floating Orbs */}
+   560→        <motion.div
+   561→          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[5]"
+   562→          animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
+   563→          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
+   564→        />
+   565→        <motion.div
+   566→          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[5]"
+   567→          animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
+   568→          transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' }}
+   569→        />
+   570→        <motion.div
+   571→          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[5]"
+   572→          animate={{ y: [0, -15, 0] }}
+   573→          transition={{ repeat: Infinity, duration: 7 }}
+   574→        />
+   575→
+   576→        {/* Content */}
+   577→        <motion.div
+   578→          className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pt-24 pb-20"
+   579→          animate={{ y: [0, -8, 0] }}
+   580→          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+   581→        >
+   582→          {/* Testnet Active Badge */}
+   583→          <motion.div
+   584→            variants={fadeUp}
+   585→            initial="hidden"
+   586→            animate="visible"
+   587→            custom={0}
+   588→            className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8"
+   589→          >
+   590→            <span className="animate-pulse-dot size-2 rounded-full bg-primary" />
+   591→            <span className="text-xs font-mono text-primary">Testnet Active</span>
+   592→          </motion.div>
+   593→
+   594→          <motion.h1
+   595→            initial="hidden"
+   596→            animate="visible"
+   597→            className="font-bold tracking-tight leading-[1.08]"
+   598→          >
+   599→            <motion.span
+   600→              variants={fadeUp}
+   601→              custom={1}
+   602→              className="block text-4xl md:text-6xl lg:text-7xl"
+   603→            >
+   604→              Private-by-Default
+   605→            </motion.span>
+   606→            <motion.span
+   607→              variants={fadeUp}
+   608→              custom={2}
+   609→              className="block text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-primary via-emerald-300 to-primary bg-clip-text text-transparent mt-1"
+   610→            >
+   611→              Infrastructure
+   612→            </motion.span>
+   613→            <motion.span
+   614→              variants={fadeUp}
+   615→              custom={3}
+   616→              className="block text-4xl md:text-6xl lg:text-7xl text-muted-foreground mt-1"
+   617→            >
+   618→              for the Next Internet
+   619→            </motion.span>
+   620→          </motion.h1>
+   621→
+   622→          <motion.p
+   623→            variants={fadeUp}
+   624→            initial="hidden"
+   625→            animate="visible"
+   626→            custom={4}
+   627→            className="mt-8 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+   628→          >
+   629→            Cryptographic privacy primitives for Web3. Build applications where
+   630→            user data stays encrypted, provable, and completely yours.
+   631→          </motion.p>
+   632→
+   633→          <motion.div
+   634→            variants={fadeUp}
+   635→            initial="hidden"
+   636→            animate="visible"
+   637→            custom={5}
+   638→            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+   639→          >
+   640→            <Button size="lg" className="text-base px-8">
+   641→              Start Building <ArrowRight className="size-4" />
+   642→            </Button>
+   643→            <Button variant="outline" size="lg" className="text-base px-8">
+   644→              Read the Docs <ExternalLink className="size-4" />
+   645→            </Button>
+   646→          </motion.div>
+   647→        </motion.div>
+   648→      </section>
+   649→
+   650→      {/* ===== S2: MARQUEE TICKER BAR ===== */}
+   651→      <div className="border-b border-border bg-card/30 py-2 text-xs font-mono text-muted-foreground/70 overflow-hidden">
+   652→        <div className="animate-marquee flex items-center gap-8 whitespace-nowrap w-max">
+   653→          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+   654→            <span key={i} className="flex items-center gap-8">
+   655→              <span>{item}</span>
+   656→              <span className="size-1 rounded-full bg-primary/40" />
+   657→            </span>
+   658→          ))}
+   659→        </div>
+   660→      </div>
+   661→
+   662→      {/* ===== TECH STACK BAR ===== */}
+   663→      <SectionWrapper>
+   664→        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 text-center">
+   665→          <motion.p
+   666→            variants={fadeUp}
+   667→            initial="hidden"
+   668→            whileInView="visible"
+   669→            viewport={{ once: true }}
+   670→            custom={0}
+   671→            className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-8"
+   672→          >
+   673→            Built on Proven Technology
+   674→          </motion.p>
+   675→          <motion.div
+   676→            variants={fadeUp}
+   677→            initial="hidden"
+   678→            whileInView="visible"
+   679→            viewport={{ once: true }}
+   680→            custom={1}
+   681→            className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3"
+   682→          >
+   683→            {TECH_STACK.map((t, i) => (
+   684→              <span key={t} className="flex items-center gap-6">
+   685→                <span className="text-sm text-muted-foreground/80 font-mono">{t}</span>
+   686→                {i < TECH_STACK.length - 1 && (
+   687→                  <span className="hidden sm:inline-block size-1 rounded-full bg-muted-foreground/30" />
+   688→                )}
+   689→              </span>
+   690→            ))}
+   691→          </motion.div>
+   692→        </div>
+   693→      </SectionWrapper>
+   694→
+   695→      {/* ===== F1: PROTOCOL METRICS BAR ===== */}
+   696→      <SectionWrapper>
+   697→        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+   698→          <SectionHeader
+   699→            label="Protocol"
+   700→            title="By the Numbers"
+   701→            subtitle="Real-time metrics from the noVault testnet."
+   702→          />
+   703→          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-14">
+   704→            {([
+   705→              {
+   706→                value: liveMetrics
+   707→                  ? formatProofs(liveMetrics.proofsGenerated as number)
+   708→                  : METRICS[0].value,
+   709→                label: METRICS[0].label,
+   710→              },
+   711→              {
+   712→                value: liveMetrics
+   713→                  ? formatValue(liveMetrics.valueSecured as number)
+   714→                  : METRICS[1].value,
+   715→                label: METRICS[1].label,
+   716→              },
+   717→              {
+   718→                value: liveMetrics
+   719→                  ? formatDevs(liveMetrics.developers as number)
+   720→                  : METRICS[2].value,
+   721→                label: METRICS[2].label,
+   722→              },
+   723→              {
+   724→                value: liveMetrics
+   725→                  ? formatUptime(liveMetrics.uptime as number)
+   726→                  : METRICS[3].value,
+   727→                label: METRICS[3].label,
+   728→              },
+   729→            ] as const).map((m, i) => (
+   730→              <motion.div
+   731→                key={m.label}
+   732→                variants={fadeUp}
+   733→                initial="hidden"
+   734→                whileInView="visible"
+   735→                viewport={{ once: true }}
+   736→                custom={i}
+   737→                className="rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center"
+   738→              >
+   739→                <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
+   740→                  {m.value}
+   741→                </div>
+   742→                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+   743→                  {m.label}
+   744→                </div>
+   745→              </motion.div>
+   746→            ))}
+   747→          </div>
+   748→          {liveMetrics && (
+   749→            <div className="flex items-center justify-center mt-6 gap-2">
+   750→              <span className="relative flex size-2">
+   751→                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+   752→                <span className="relative inline-flex rounded-full size-2 bg-primary" />
+   753→              </span>
+   754→              <span className="text-xs font-mono text-primary">Live</span>
+   755→            </div>
+   756→          )}
+   757→        </div>
+   758→      </SectionWrapper>
+   759→
+   760→      {/* ===== FEATURES ===== */}
+   761→      <section id="features" className="py-24 md:py-32">
+   762→        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+   763→          <SectionHeader
+   764→            label="Features"
+   765→            title="Privacy That Doesn't Compromise"
+   766→            subtitle="Every component is designed so you never have to choose between functionality and privacy."
+   767→          />
+   768→
+   769→          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-16">
+   770→            {FEATURES.map((f, i) => (
+   771→              <FeatureCard key={f.title} {...f} index={i} />
+   772→            ))}
+   773→          </div>
+   774→        </div>
+   775→      </section>
+   776→
+   777→      {/* ===== F1: USE CASES ===== */}
+   778→      <SectionDivider />
+   779→      <section id="usecases" className="py-24 md:py-32">
+   780→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+   781→          <SectionHeader
+   782→            label="Use Cases"
+   783→            title="Privacy for Every Industry"
+   784→            subtitle="From DeFi to healthcare — noVault enables confidential computation across sectors."
+   785→          />
+   786→
+   787→          <motion.div
+   788→            variants={fadeUp}
+   789→            initial="hidden"
+   790→            whileInView="visible"
+   791→            viewport={{ once: true }}
+   792→            custom={0}
+   793→            className="mt-14"
+   794→          >
+   795→            <Tabs defaultValue="DeFi">
+   796→              <TabsList className="bg-card/50 border border-border rounded-lg p-1 h-auto flex flex-wrap">
+   797→                {USE_CASES.map((uc) => (
+   798→                  <TabsTrigger
+   799→                    key={uc.tab}
+   800→                    value={uc.tab}
+   801→                    className="text-xs font-mono px-4 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
+   802→                  >
+   803→                    {uc.tab}
+   804→                  </TabsTrigger>
+   805→                ))}
+   806→              </TabsList>
+   807→              {USE_CASES.map((uc) => (
+   808→                <TabsContent key={uc.tab} value={uc.tab} className="mt-8 rounded-lg border border-border bg-card p-6 sm:p-8">
+   809→                  <div className="flex items-start gap-4">
+   810→                    <div className="size-10 shrink-0 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+   811→                      <uc.icon className="size-5 text-primary" />
+   812→                    </div>
+   813→                    <div>
+   814→                      <h3 className="font-semibold text-lg">{uc.title}</h3>
+   815→                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{uc.desc}</p>
+   816→                      <ul className="mt-4 space-y-2">
+   817→                        {uc.stats.map((stat) => (
+   818→                          <li key={stat} className="flex items-start gap-2 text-sm text-muted-foreground">
+   819→                            <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
+   820→                            <span>{stat}</span>
+   821→                          </li>
+   822→                        ))}
+   823→                      </ul>
+   824→                    </div>
+   825→                  </div>
+   826→                </TabsContent>
+   827→              ))}
+   828→            </Tabs>
+   829→          </motion.div>
+   830→        </div>
+   831→      </section>
+   832→
+   833→      {/* ===== SECTION DIVIDER ===== */}
+   834→      <SectionDivider />
+   835→
+   836→      {/* ===== PROTOCOL ===== */}
+   837→      <section id="protocol" className="py-24 md:py-32">
+   838→        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+   839→          <SectionHeader
+   840→            label="Protocol"
+   841→            title="How noVault Works"
+   842→            subtitle="Three steps. Zero plaintext exposure. Cryptographic certainty."
+   843→          />
+   844→
+   845→          <div className="mt-16 relative">
+   846→            {/* Vertical line */}
+   847→            <div className="absolute left-6 md:left-8 top-0 bottom-0 w-px bg-border" />
+   848→
+   849→            <div className="space-y-16">
+   850→              {PROTOCOL_STEPS.map((step, i) => (
+   851→                <ProtocolStep key={step.num} {...step} index={i} />
+   852→              ))}
+   853→            </div>
+   854→          </div>
+   855→        </div>
+   856→      </section>
+   857→
+   858→      {/* ===== SECTION DIVIDER ===== */}
+   859→      <SectionDivider />
+   860→
+   861→      {/* ===== ROADMAP ===== */}
+   862→      <section id="roadmap" className="py-24 md:py-32">
+   863→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+   864→          <SectionHeader
+   865→            label="Roadmap"
+   866→            title="The Path Forward"
+   867→            subtitle="Our public development milestones. Every commitment, on-chain."
+   868→          />
+   869→
+   870→          <div className="mt-16">
+   871→            {/* Desktop: horizontal card timeline */}
+   872→            <div className="hidden md:block relative">
+   873→              {/* Connecting line */}
+   874→              <div className="absolute top-8 left-[calc(12.5%+10px)] right-[calc(12.5%+10px)] h-px bg-border" />
+   875→              <div className="grid grid-cols-4 gap-5">
+   876→                {ROADMAP.map((m, i) => (
+   877→                  <motion.div
+   878→                    key={m.phase}
+   879→                    variants={fadeUp}
+   880→                    initial="hidden"
+   881→                    whileInView="visible"
+   882→                    viewport={{ once: true }}
+   883→                    custom={i}
+   884→                    className={`rounded-lg border bg-card p-5 text-center relative ${
+   885→                      m.status === 'completed'
+   886→                        ? 'border-primary/20 bg-primary/5'
+   887→                        : m.status === 'active'
+   888→                          ? 'border-primary/40 shadow-[0_0_15px_oklch(0.72_0.17_162/0.1)]'
+   889→                          : 'opacity-70'
+   890→                    }`}
+   891→                  >
+   892→                    {/* Status dot above card */}
+   893→                    <div className="absolute -top-[9px] left-1/2 -translate-x-1/2">
+   894→                      {m.status === 'completed' && (
+   895→                        <CheckCircle2 className="size-[18px] text-primary bg-card rounded-full" />
+   896→                      )}
+   897→                      {m.status === 'active' && (
+   898→                        <span className="animate-pulse-dot block size-[18px] rounded-full bg-primary ring-4 ring-primary/20" />
+   899→                      )}
+   900→                      {m.status === 'upcoming' && (
+   901→                        <span className="block size-[18px] rounded-full bg-muted-foreground/30" />
+   902→                      )}
+   903→                    </div>
+   904→                    <p className="text-xs font-mono text-muted-foreground mb-2">{m.phase}</p>
+   905→                    <h3 className="font-semibold text-sm">{m.title}</h3>
+   906→                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{m.desc}</p>
+   907→                  </motion.div>
+   908→                ))}
+   909→              </div>
+   910→            </div>
+   911→
+   912→            {/* Mobile: vertical card timeline */}
+   913→            <div className="md:hidden relative">
+   914→              <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
+   915→              <div className="space-y-6">
+   916→                {ROADMAP.map((m, i) => (
+   917→                  <motion.div
+   918→                    key={m.phase}
+   919→                    variants={fadeUp}
+   920→                    initial="hidden"
+   921→                    whileInView="visible"
+   922→                    viewport={{ once: true }}
+   923→                    custom={i}
+   924→                    className="relative pl-14"
+   925→                  >
+   926→                    <div className="absolute left-[14px] top-4 -translate-x-1/2">
+   927→                      {m.status === 'completed' && (
+   928→                        <CheckCircle2 className="size-5 text-primary" />
+   929→                      )}
+   930→                      {m.status === 'active' && (
+   931→                        <span className="animate-pulse-dot block size-3 rounded-full bg-primary ring-4 ring-primary/20" />
+   932→                      )}
+   933→                      {m.status === 'upcoming' && (
+   934→                        <span className="block size-3 rounded-full bg-muted-foreground/30" />
+   935→                      )}
+   936→                    </div>
+   937→                    <div className={`rounded-lg border bg-card p-5 ${
+   938→                      m.status === 'completed'
+   939→                        ? 'border-primary/20 bg-primary/5'
+   940→                        : m.status === 'active'
+   941→                          ? 'border-primary/40 shadow-[0_0_15px_oklch(0.72_0.17_162/0.1)]'
+   942→                          : 'opacity-70'
+   943→                    }`}>
+   944→                      <p className="text-xs font-mono text-muted-foreground mb-1">{m.phase}</p>
+   945→                      <h3 className="font-semibold text-sm">{m.title}</h3>
+   946→                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.desc}</p>
+   947→                    </div>
+   948→                  </motion.div>
+   949→                ))}
+   950→              </div>
+   951→            </div>
+   952→          </div>
+   953→        </div>
+   954→      </section>
+   955→
+   956→      {/* ===== F4: CHANGELOG ===== */}
+   957→      <SectionDivider />
+   958→      <section id="changelog" className="py-24 md:py-32">
+   959→        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+   960→          <SectionHeader
+   961→            label="Changelog"
+   962→            title="Recent Updates"
+   963→            subtitle="Every release is documented. Every change is auditable."
+   964→          />
+   965→
+   966→          <div className="mt-14 space-y-8">
+   967→            {CHANGELOG.map((entry, i) => (
+   968→              <motion.div
+   969→                key={entry.version}
+   970→                variants={fadeUp}
+   971→                initial="hidden"
+   972→                whileInView="visible"
+   973→                viewport={{ once: true }}
+   974→                custom={i}
+   975→                className="relative rounded-lg border border-border bg-card p-6"
+   976→              >
+   977→                <div className="flex items-center gap-3 mb-3">
+   978→                  <span className="text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-md">{entry.version}</span>
+   979→                  <span className="text-xs font-mono text-muted-foreground">{entry.date}</span>
+   980→                </div>
+   981→                <h3 className="font-semibold text-base">{entry.title}</h3>
+   982→                <ul className="mt-3 space-y-2">
+   983→                  {entry.items.map((item) => (
+   984→                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+   985→                      <CheckCircle2 className="size-3.5 text-primary/60 shrink-0 mt-1" />
+   986→                      <span>{item}</span>
+   987→                    </li>
+   988→                  ))}
+   989→                </ul>
+   990→              </motion.div>
+   991→            ))}
+   992→          </div>
+   993→        </div>
+   994→      </section>
+   995→
+   996→      {/* ===== SECTION DIVIDER ===== */}
+   997→      <SectionDivider />
+   998→
+   999→      {/* ===== DEVELOPERS ===== */}
+  1000→      <section id="developers" className="py-24 md:py-32">
+  1001→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+  1002→          <SectionHeader
+  1003→            label="Developers"
+  1004→            title="Built for Developers"
+  1005→            subtitle="Integrate privacy into your application with a few lines of code."
+  1006→          />
+  1007→
+  1008→          <motion.div
+  1009→            variants={fadeUp}
+  1010→            initial="hidden"
+  1011→            whileInView="visible"
+  1012→            viewport={{ once: true }}
+  1013→            custom={0}
+  1014→            className="mt-14 rounded-lg border border-border bg-card overflow-hidden scan-line"
+  1015→          >
+  1016→            {/* Code block header with copy button */}
+  1017→            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+  1018→              <span className="size-3 rounded-full bg-muted-foreground/30" />
+  1019→              <span className="size-3 rounded-full bg-muted-foreground/20" />
+  1020→              <span className="size-3 rounded-full bg-muted-foreground/10" />
+  1021→              <span className="ml-3 text-xs font-mono text-muted-foreground">PrivateVault.sol</span>
+  1022→              <button
+  1023→                onClick={handleCopyCode}
+  1024→                className="ml-auto text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+  1025→                aria-label="Copy code"
+  1026→              >
+  1027→                {copied ? <CheckCircle2 className="size-4 text-primary" /> : <Copy className="size-4" />}
+  1028→              </button>
+  1029→            </div>
+  1030→            {/* Code content */}
+  1031→            <div className="p-5 sm:p-6 font-mono text-xs sm:text-sm leading-7 overflow-x-auto">
+  1032→              <CodeLine indent={0}><KW>pragma</KW> solidity <Num>0.8.24</Num>;</CodeLine>
+  1033→              <CodeLine indent={0}><KW>import</KW> {"{@noVault/sdk/"}<Str>"PrivateVault.sol"</Str>;</CodeLine>
+  1034→              <CodeLine />
+  1035→              <CodeLine indent={0}><KW>contract</KW> <Fn>EncryptedAssetVault</Fn> <KW>is</KW> <Type>PrivateVault</Type> {'{'}</CodeLine>
+  1036→              <CodeLine indent={1}><KW>using</KW> <Type>ZkCipher</Type> <KW>for</KW> <Type>bytes32</Type>;</CodeLine>
+  1037→              <CodeLine />
+  1038→              <CodeLine indent={1}><Fn>function</Fn> <Fn>transfer</Fn>(
+  1039→                <Type>address</Type> <Var>to</Var>,
+  1040→                <Type>uint256</Type> <Var>amount</Var>
+  1041→              ) <KW>external</KW> {'{'}</CodeLine>
+  1042→              <CodeLine indent={2}><Com>{'// Encrypt inputs client-side'}</Com></CodeLine>
+  1043→              <CodeLine indent={2}><Type>Ciphertext</Type> <Var>ct</Var> = <Type>ZkCipher</Type>.<Fn>encrypt</Fn>(<Var>amount</Var>, <Var>msg.sender</Var>);</CodeLine>
+  1044→              <CodeLine indent={2}><Com>{'// Generate ZK proof of valid transfer'}</Com></CodeLine>
+  1045→              <Type>Proof</Type> <Var>proof</Var> = <Type>ZkProver</Type>.<Fn>proveTransfer</Fn>(<Var>ct</Var>, <Var>to</Var>);
+  1046→              <CodeLine indent={2}><Com>{'// Settle on-chain \u2014 amount never revealed'}</Com></CodeLine>
+  1047→              <CodeLine indent={2}><Type>_vault</Type>.<Fn>settle</Fn>(<Var>proof</Var>, <Var>ct</Var>, <Var>to</Var>);</CodeLine>
+  1048→              <CodeLine indent={1}>{'}'}</CodeLine>
+  1049→              <CodeLine indent={0}>{'}'}</CodeLine>
+  1050→            </div>
+  1051→          </motion.div>
+  1052→
+  1053→          {/* Stats with Animated Counter */}
+  1054→          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+  1055→            {[
+  1056→              { value: 4, suffix: 'ms', label: 'Proof Latency' },
+  1057→              { value: 1, prefix: '<', suffix: 'kb', label: 'Proof Size' },
+  1058→              { value: 10, suffix: 'M+', label: 'Operations Supported' },
+  1059→            ].map((s, i) => (
+  1060→              <motion.div
+  1061→                key={s.label}
+  1062→                variants={fadeUp}
+  1063→                initial="hidden"
+  1064→                whileInView="visible"
+  1065→                viewport={{ once: true }}
+  1066→                custom={i + 1}
+  1067→                className="rounded-lg border border-border bg-card p-6 text-center"
+  1068→              >
+  1069→                <div className="text-2xl sm:text-3xl font-bold font-mono text-primary">
+  1070→                  <AnimatedCounter target={s.value} prefix={s.prefix} suffix={s.suffix} />
+  1071→                </div>
+  1072→                <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
+  1073→              </motion.div>
+  1074→            ))}
+  1075→          </div>
+  1076→        </div>
+  1077→      </section>
+  1078→
+  1079→      {/* ===== F2: SECURITY ===== */}
+  1080→      <SectionDivider />
+  1081→      <section id="security" className="py-24 md:py-32 relative">
+  1082→        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,oklch(0.72_0.17_162/0.06),transparent)] pointer-events-none" />
+  1083→        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
+  1084→          <SectionHeader
+  1085→            label="Security"
+  1086→            title="Security First, Always"
+  1087→            subtitle="Multiple layers of protection from formally verified circuits to independent audits."
+  1088→          />
+  1089→
+  1090→          {/* Security stat counters */}
+  1091→          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-14 mb-10">
+  1092→            {[
+  1093→              { value: 3, suffix: '', label: 'Audits Completed' },
+  1094→              { value: 500, prefix: '$', suffix: 'K', label: 'Max Bounty' },
+  1095→              { value: 0, suffix: '', label: 'Critical Findings' },
+  1096→              { value: 24, suffix: '/7', label: 'Monitoring' },
+  1097→            ].map((s, i) => (
+  1098→              <motion.div
+  1099→                key={s.label}
+  1100→                variants={fadeUp}
+  1101→                initial="hidden"
+  1102→                whileInView="visible"
+  1103→                viewport={{ once: true }}
+  1104→                custom={i}
+  1105→                className="rounded-lg border border-border bg-card/50 p-4 sm:p-5 text-center"
+  1106→              >
+  1107→                <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
+  1108→                  <AnimatedCounter target={s.value} prefix={s.prefix} suffix={s.suffix} />
+  1109→                </div>
+  1110→                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{s.label}</div>
+  1111→              </motion.div>
+  1112→            ))}
+  1113→          </div>
+  1114→
+  1115→          {/* Security cards grid */}
+  1116→          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+  1117→            {SECURITY_ITEMS.map((item, i) => (
+  1118→              <motion.div
+  1119→                key={item.title}
+  1120→                variants={fadeUp}
+  1121→                initial="hidden"
+  1122→                whileInView="visible"
+  1123→                viewport={{ once: true }}
+  1124→                custom={i}
+  1125→                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+  1126→              >
+  1127→                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+  1128→                  <item.icon className="size-5 text-primary" />
+  1129→                </div>
+  1130→                <h3 className="font-semibold text-base">{item.title}</h3>
+  1131→                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{item.desc}</p>
+  1132→              </motion.div>
+  1133→            ))}
+  1134→          </div>
+  1135→        </div>
+  1136→      </section>
+  1137→
+  1138→      {/* ===== SECTION DIVIDER ===== */}
+  1139→      <SectionDivider />
+  1140→
+  1141→      {/* ===== FAQ ===== */}
+  1142→      <section id="faq" className="py-24 md:py-32">
+  1143→        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+  1144→          <SectionHeader
+  1145→            label="FAQ"
+  1146→            title="Frequently Asked Questions"
+  1147→            subtitle="Everything you need to know about building with noVault."
+  1148→          />
+  1149→
+  1150→          <motion.div
+  1151→            variants={fadeUp}
+  1152→            initial="hidden"
+  1153→            whileInView="visible"
+  1154→            viewport={{ once: true }}
+  1155→            custom={0}
+  1156→            className="mt-14"
+  1157→          >
+  1158→            <Accordion type="single" collapsible className="w-full">
+  1159→              {FAQ_DATA.map((faq, i) => (
+  1160→                <AccordionItem
+  1161→                  key={i}
+  1162→                  value={`faq-${i}`}
+  1163→                  className="border-b border-border data-[state=open]:border-l-2 data-[state=open]:border-l-primary"
+  1164→                >
+  1165→                  <AccordionTrigger className="text-sm font-medium text-left hover:no-underline hover:text-foreground py-5">
+  1166→                    <span className="flex items-center">
+  1167→                      <span className="text-xs font-mono text-primary/50 mr-3">{String(i + 1).padStart(2, '0')}</span>
+  1168→                      {faq.q}
+  1169→                    </span>
+  1170→                  </AccordionTrigger>
+  1171→                  <AccordionContent>
+  1172→                    <p className="text-muted-foreground text-sm leading-relaxed">{faq.a}</p>
+  1173→                  </AccordionContent>
+  1174→                </AccordionItem>
+  1175→              ))}
+  1176→            </Accordion>
+  1177→          </motion.div>
+  1178→        </div>
+  1179→      </section>
+  1180→
+  1181→      {/* ===== SECTION DIVIDER ===== */}
+  1182→      <SectionDivider />
+  1183→
+  1184→      {/* ===== WAITLIST ===== */}
+  1185→      <section id="waitlist" className="py-24 md:py-32">
+  1186→        <div className="max-w-xl mx-auto px-4 sm:px-6">
+  1187→          <div className="relative rounded-2xl p-px bg-gradient-to-br from-primary/20 via-border to-primary/10">
+  1188→            <div className="absolute -inset-px rounded-2xl bg-primary/5 blur-xl -z-10" />
+  1189→            <div className="rounded-2xl bg-background p-8 sm:p-12 text-center">
+  1190→              <div className="flex justify-center mb-4">
+  1191→                <div className="size-10 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+  1192→                  <Shield className="size-5 text-primary" />
+  1193→                </div>
+  1194→              </div>
+  1195→              <SectionHeader
+  1196→                label="Waitlist"
+  1197→                title="Join the Waitlist"
+  1198→                subtitle="Be the first to access noVault's mainnet. Early adopters get priority SDK access."
+  1199→              />
+  1200→
+  1201→              <motion.div
+  1202→                variants={fadeUp}
+  1203→                initial="hidden"
+  1204→                whileInView="visible"
+  1205→                viewport={{ once: true }}
+  1206→                custom={0}
+  1207→                className="mt-10 flex flex-col sm:flex-row items-center gap-3"
+  1208→              >
+  1209→                <Input
+  1210→                  type="email"
+  1211→                  placeholder="you@example.com"
+  1212→                  value={waitlistEmail}
+  1213→                  onChange={(e) => setWaitlistEmail(e.target.value)}
+  1214→                  onKeyDown={(e) => { if (e.key === 'Enter') handleWaitlist(); }}
+  1215→                  className="bg-card border-border flex-1 w-full sm:w-auto"
+  1216→                />
+  1217→                <Button onClick={handleWaitlist} className="w-full sm:w-auto whitespace-nowrap">
+  1218→                  Join Waitlist <ArrowRight className="size-3.5" />
+  1219→                </Button>
+  1220→              </motion.div>
+  1221→
+  1222→              <motion.p
+  1223→                variants={fadeUp}
+  1224→                initial="hidden"
+  1225→                whileInView="visible"
+  1226→                viewport={{ once: true }}
+  1227→                custom={1}
+  1228→                className="mt-4 text-xs text-muted-foreground"
+  1229→              >
+  1230→                {waitlistCount !== null
+  1231→                  ? `Join ${(waitlistCount + 1).toLocaleString()}+ builders on the waitlist`
+  1232→                  : 'No spam. We only send major protocol updates.'}
+  1233→              </motion.p>
+  1234→            </div>
+  1235→          </div>
+  1236→        </div>
+  1237→      </section>
+  1238→
+  1239→      {/* ===== CTA ===== */}
+  1240→      <section className="py-24 md:py-32 relative overflow-hidden">
+  1241→        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-primary/5" />
+  1242→        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,oklch(0.72_0.17_162/0.07),transparent)]" />
+  1243→        <div className="absolute inset-0 grid-bg pointer-events-none" />
+  1244→        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center">
+  1245→          <motion.h2
+  1246→            variants={fadeUp}
+  1247→            initial="hidden"
+  1248→            whileInView="visible"
+  1249→            viewport={{ once: true }}
+  1250→            custom={0}
+  1251→            className="text-3xl md:text-5xl font-bold tracking-tight"
+  1252→          >
+  1253→            Ready to Build with Privacy?
+  1254→          </motion.h2>
+  1255→          <motion.p
+  1256→            variants={fadeUp}
+  1257→            initial="hidden"
+  1258→            whileInView="visible"
+  1259→            viewport={{ once: true }}
+  1260→            custom={1}
+  1261→            className="mt-5 text-muted-foreground text-lg max-w-xl mx-auto"
+  1262→          >
+  1263→            Join the developers building the next generation of Web3 applications with
+  1264→            privacy at the foundation.
+  1265→          </motion.p>
+  1266→          <motion.div
+  1267→            variants={fadeUp}
+  1268→            initial="hidden"
+  1269→            whileInView="visible"
+  1270→            viewport={{ once: true }}
+  1271→            custom={2}
+  1272→            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+  1273→          >
+  1274→            <Button size="lg" className="text-base px-8">
+  1275→              Get Started <ArrowRight className="size-4" />
+  1276→            </Button>
+  1277→            <Button variant="outline" size="lg" className="text-base px-8">
+  1278→              Follow us on X <ExternalLink className="size-4" />
+  1279→            </Button>
+  1280→          </motion.div>
+  1281→
+  1282→          {/* Trust indicators */}
+  1283→          <motion.div
+  1284→            variants={fadeUp}
+  1285→            initial="hidden"
+  1286→            whileInView="visible"
+  1287→            viewport={{ once: true }}
+  1288→            custom={3}
+  1289→            className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground"
+  1290→          >
+  1291→            <span className="flex items-center gap-1.5">
+  1292→              <CheckCircle2 className="size-3.5 text-primary" />
+  1293→              Audited by Trail of Bits
+  1294→            </span>
+  1295→            <span className="flex items-center gap-1.5">
+  1296→              <CheckCircle2 className="size-3.5 text-primary" />
+  1297→              Open Source
+  1298→            </span>
+  1299→          </motion.div>
+  1300→        </div>
+  1301→      </section>
+  1302→
+  1303→      {/* ===== F2: BACKED BY ===== */}
+  1304→      <SectionWrapper>
+  1305→        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 text-center">
+  1306→          <SectionHeader
+  1307→            label="Backed By"
+  1308→            title="Trusted by Leading Teams"
+  1309→            subtitle="Supported by the best in Web3."
+  1310→          />
+  1311→          <motion.div
+  1312→            variants={fadeUp}
+  1313→            initial="hidden"
+  1314→            whileInView="visible"
+  1315→            viewport={{ once: true }}
+  1316→            custom={0}
+  1317→            className="flex flex-wrap items-center justify-center gap-3 mt-14"
+  1318→          >
+  1319→            {PARTNERS.map((p, i) => (
+  1320→              <motion.span
+  1321→                key={p}
+  1322→                variants={fadeUp}
+  1323→                initial="hidden"
+  1324→                whileInView="visible"
+  1325→                viewport={{ once: true }}
+  1326→                custom={i}
+  1327→                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] text-sm text-muted-foreground/50 hover:text-foreground transition-colors duration-300 font-mono cursor-default"
+  1328→              >
+  1329→                {p}
+  1330→              </motion.span>
+  1331→            ))}
+  1332→          </motion.div>
+  1333→          <motion.p
+  1334→            variants={fadeUp}
+  1335→            initial="hidden"
+  1336→            whileInView="visible"
+  1337→            viewport={{ once: true }}
+  1338→            custom={1}
+  1339→            className="mt-6 text-xs text-muted-foreground"
+  1340→          >
+  1341→            Strategic partners and advisors. For a complete list, see our documentation.
+  1342→          </motion.p>
+  1343→        </div>
+  1344→      </SectionWrapper>
+  1345→
+  1346→      {/* ===== TEAM ===== */}
+  1347→      <section className="py-24 md:py-32">
+  1348→        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+  1349→          <SectionHeader
+  1350→            label="Team"
+  1351→            title="Built by Cryptographers"
+  1352→            subtitle="A lean team of researchers and engineers building the future of private computation."
+  1353→          />
+  1354→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-16">
+  1355→            {TEAM_MEMBERS.map((member, i) => (
+  1356→              <motion.div
+  1357→                key={member.name}
+  1358→                variants={fadeUp}
+  1359→                initial="hidden"
+  1360→                whileInView="visible"
+  1361→                viewport={{ once: true }}
+  1362→                custom={i}
+  1363→                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+  1364→              >
+  1365→                <div className="size-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
+  1366→                  {member.name.split(' ').map(n => n[0]).join('')}
+  1367→                </div>
+  1368→                <h3 className="font-semibold text-base mt-4">{member.name}</h3>
+  1369→                <p className="text-xs font-mono text-primary uppercase tracking-wider mt-1">{member.role}</p>
+  1370→                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{member.bio}</p>
+  1371→                <div className="flex items-center gap-4 mt-4">
+  1372→                  <a href={member.socials.x} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on X`}>
+  1373→                    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+  1374→                  </a>
+  1375→                  <a href={member.socials.github} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on GitHub`}>
+  1376→                    <Github className="size-3.5" />
+  1377→                  </a>
+  1378→                </div>
+  1379→              </motion.div>
+  1380→            ))}
+  1381→          </div>
+  1382→        </div>
+  1383→      </section>
+  1384→
+  1385→      {/* ===== CONTACT ===== */}
+  1386→      <section className="py-24 md:py-32">
+  1387→        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+  1388→          <SectionHeader
+  1389→            label="Contact"
+  1390→            title="Get in Touch"
+  1391→            subtitle="Have questions about integrating noVault? Our team is here to help."
+  1392→          />
+  1393→          <div className="mt-14 space-y-4">
+  1394→            <div>
+  1395→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Name *</label>
+  1396→              <Input
+  1397→                placeholder="Your name"
+  1398→                value={contactForm.name}
+  1399→                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+  1400→                className="bg-card border-border w-full"
+  1401→              />
+  1402→            </div>
+  1403→            <div>
+  1404→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Email *</label>
+  1405→              <Input
+  1406→                type="email"
+  1407→                placeholder="you@company.com"
+  1408→                value={contactForm.email}
+  1409→                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+  1410→                className="bg-card border-border w-full"
+  1411→              />
+  1412→            </div>
+  1413→            <div>
+  1414→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Subject</label>
+  1415→              <Input
+  1416→                placeholder="What is this about?"
+  1417→                value={contactForm.subject}
+  1418→                onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+  1419→                className="bg-card border-border w-full"
+  1420→              />
+  1421→            </div>
+  1422→            <div>
+  1423→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Message *</label>
+  1424→              <Textarea
+  1425→                placeholder="Tell us about your project..."
+  1426→                value={contactForm.message}
+  1427→                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+  1428→                className="bg-card border-border w-full min-h-[120px] resize-none"
+  1429→              />
+  1430→            </div>
+  1431→            <Button onClick={handleContact} disabled={contactSending} className="w-full sm:w-auto">
+  1432→              {contactSending ? 'Sending...' : 'Send Message'} <ArrowRight className="size-3.5" />
+  1433→            </Button>
+  1434→            <p className="text-xs text-muted-foreground">We typically respond within 24 hours.</p>
+  1435→          </div>
+  1436→        </div>
+  1437→      </section>
+  1438→
+  1439→      {/* ===== FOOTER ===== */}
+  1440→      <footer className="mt-auto border-t border-border bg-card/50">
+  1441→        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+  1442→          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+  1443→            {/* Brand */}
+  1444→            <div className="col-span-2 md:col-span-1">
+  1445→              <div className="flex items-center gap-2 mb-4">
+  1446→                <Image src="/novault-logo.png" alt="noVault" width={24} height={24} className="rounded-sm" />
+  1447→                <span className="font-mono font-bold text-sm">no<span className="text-primary">Vault</span></span>
+  1448→              </div>
+  1449→              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+  1450→                Private-by-default infrastructure for the next internet.
+  1451→              </p>
+  1452→            </div>
+  1453→
+  1454→            {/* Product */}
+  1455→            <div>
+  1456→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Product</h4>
+  1457→              <ul className="space-y-2.5">
+  1458→                <li><a href="#features" onClick={(e) => handleNavClick(e, '#features')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+  1459→                <li><a href="#protocol" onClick={(e) => handleNavClick(e, '#protocol')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Protocol</a></li>
+  1460→                <li><a href="#developers" onClick={(e) => handleNavClick(e, '#developers')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">SDK</a></li>
+  1461→                <li><span className="text-sm text-muted-foreground/50 cursor-default">Changelog</span></li>
+  1462→              </ul>
+  1463→            </div>
+  1464→
+  1465→            {/* Resources */}
+  1466→            <div>
+  1467→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Resources</h4>
+  1468→              <ul className="space-y-2.5">
+  1469→                <li><a href='#developers' onClick={(e) => handleNavClick(e, '#developers')} className='text-sm text-muted-foreground hover:text-foreground transition-colors'>Documentation</a></li>
+  1470→                <li><a href='https://github.com/novaultech' target='_blank' rel='noopener noreferrer' className='text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'>
+  1471→                  <Github className='size-3.5' /> GitHub
+  1472→                </a></li>
+  1473→                <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
+  1474→                <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
+  1475→              </ul>
+  1476→            </div>
+  1477→
+  1478→            {/* Legal */}
+  1479→            <div>
+  1480→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Legal</h4>
+  1481→              <ul className="space-y-2.5">
+  1482→                <li>
+  1483→                  <button
+  1484→                    onClick={() => setTermsOpen(true)}
+  1485→                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+  1486→                  >
+  1487→                    Terms of Service
+  1488→                  </button>
+  1489→                </li>
+  1490→                <li>
+  1491→                  <button
+  1492→                    onClick={() => setPrivacyOpen(true)}
+  1493→                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+  1494→                  >
+  1495→                    Privacy Policy
+  1496→                  </button>
+  1497→                </li>
+  1498→              </ul>
+  1499→            </div>
+  1500→          </div>
+  1501→
+  1502→          {/* Bottom bar */}
+  1503→          <Separator className="mt-12 mb-6" />
+  1504→          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+  1505→            <p className="text-xs text-muted-foreground">
+  1506→              © 2025 noVault. All rights reserved.
+  1507→            </p>
+  1508→            <a
+  1509→              href="https://x.com/novaultech"
+  1510→              target="_blank"
+  1511→              rel="noopener noreferrer"
+  1512→              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+  1513→            >
+  1514→              <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  1515→                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  1516→              </svg>
+  1517→              @novaultech
+  1518→            </a>
+  1519→          </div>
+  1520→
+  1521→          {/* F3: Community / Social Links */}
+  1522→          <Separator className="mt-6 mb-4" />
+  1523→          <div className="flex items-center justify-center gap-4">
+  1524→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
+  1525→              <Github className="size-4" />
+  1526→            </a>
+  1527→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
+  1528→              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+  1529→            </a>
+  1530→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Telegram">
+  1531→              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+  1532→            </a>
+  1533→          </div>
+  1534→        </div>
+  1535→      </footer>
+  1536→
+  1537→      {/* ===== TERMS DIALOG ===== */}
+  1538→      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+  1539→        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+  1540→          <DialogHeader>
+  1541→            <DialogTitle>Terms of Service</DialogTitle>
+  1542→            <DialogDescription>Last updated: June 2025</DialogDescription>
+  1543→          </DialogHeader>
+  1544→          {TERMS_CONTENT}
+  1545→        </DialogContent>
+  1546→      </Dialog>
+  1547→
+  1548→      {/* ===== PRIVACY DIALOG ===== */}
+  1549→      <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
+  1550→        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+  1551→          <DialogHeader>
+  1552→            <DialogTitle>Privacy Policy</DialogTitle>
+  1553→            <DialogDescription>Last updated: June 2025</DialogDescription>
+  1554→          </DialogHeader>
+  1555→          {PRIVACY_CONTENT}
+  1556→        </DialogContent>
+  1557→      </Dialog>
+  1558→
+  1559→      {/* ===== BACK TO TOP ===== */}
+  1560→      <AnimatePresence>
+  1561→        {showBackToTop && (
+  1562→          <motion.button
+  1563→            initial={{ opacity: 0, scale: 0.8 }}
+  1564→            animate={{ opacity: 1, scale: 1 }}
+  1565→            exit={{ opacity: 0, scale: 0.8 }}
+  1566→            transition={{ duration: 0.2 }}
+  1567→            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+  1568→            className="fixed bottom-6 right-6 z-50 size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-all cursor-pointer"
+  1569→            aria-label="Back to top"
+  1570→          >
+  1571→            <ArrowUp className="size-4" />
+  1572→          </motion.button>
+  1573→        )}
+  1574→      </AnimatePresence>
+  1575→    </div>
+  1576→  );
+  1577→}
+  1578→
+  1579→/* ------------------------------------------------------------------ */
+  1580→/*  Sub-components                                                     */
+  1581→/* ------------------------------------------------------------------ */
+  1582→
+  1583→function SectionWrapper({ children }: { children: React.ReactNode }) {
+  1584→  return <div className="border-t border-border">{children}</div>;
+  1585→}
+  1586→
+  1587→function SectionDivider() {
+  1588→  return (
+  1589→    <div className="flex items-center justify-center py-2">
+  1590→      <div className="flex items-center gap-3 w-full max-w-xs">
+  1591→        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-border" />
+  1592→        <span className="size-1.5 rounded-full bg-primary/40" />
+  1593→        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-border" />
+  1594→      </div>
+  1595→    </div>
+  1596→  );
+  1597→}
+  1598→
+  1599→function SectionHeader({ label, title, subtitle }: { label: string; title: string; subtitle: string }) {
+  1600→  return (
+  1601→    <div className="text-center max-w-2xl mx-auto">
+  1602→      <motion.p
+  1603→        variants={fadeUp}
+  1604→        initial="hidden"
+  1605→        whileInView="visible"
+  1606→        viewport={{ once: true }}
+  1607→        custom={0}
+  1608→        className="text-xs font-mono uppercase tracking-widest text-primary mb-4"
+  1609→      >
+  1610→        {label}
+  1611→      </motion.p>
+  1612→      <motion.h2
+  1613→        variants={fadeUp}
+  1614→        initial="hidden"
+  1615→        whileInView="visible"
+  1616→        viewport={{ once: true }}
+  1617→        custom={1}
+  1618→        className="text-3xl md:text-4xl font-bold tracking-tight"
+  1619→      >
+  1620→        {title}
+  1621→      </motion.h2>
+  1622→      <motion.p
+  1623→        variants={fadeUp}
+  1624→        initial="hidden"
+  1625→        whileInView="visible"
+  1626→        viewport={{ once: true }}
+  1627→        custom={2}
+  1628→        className="mt-4 text-muted-foreground"
+  1629→      >
+  1630→        {subtitle}
+  1631→      </motion.p>
+  1632→    </div>
+  1633→  );
+  1634→}
+  1635→
+  1636→function FeatureCard({ icon: Icon, title, desc, index }: { icon: React.ElementType; title: string; desc: string; index: number }) {
+  1637→  return (
+  1638→    <motion.div
+  1639→      variants={fadeUp}
+  1640→      initial="hidden"
+  1641→      whileInView="visible"
+  1642→      viewport={{ once: true }}
+  1643→      custom={index}
+  1644→      whileHover={{ y: -4 }}
+  1645→      transition={{ type: 'tween', duration: 0.2 }}
+  1646→      className="group relative rounded-lg p-px"
+  1647→    >
+  1648→      {/* Gradient border on hover */}
+  1649→      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/50 via-transparent to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  1650→      {/* Shimmer overlay */}
+  1651→      <div className="absolute inset-0 rounded-lg overflow-hidden">
+  1652→        <div className="animate-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  1653→      </div>
+  1654→      <div className="relative rounded-lg border border-border bg-card p-6">
+  1655→        {/* S2: Numbered indicator */}
+  1656→        <span className="absolute top-6 left-6 text-xs font-mono text-muted-foreground/30 select-none">
+  1657→          {String(index + 1).padStart(2, '0')}
+  1658→        </span>
+  1659→        {/* Hover arrow */}
+  1660→        <ArrowRight className="absolute top-6 right-6 size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  1661→        {/* Icon with gradient bg */}
+  1662→        <div className="size-10 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4">
+  1663→          <Icon className="size-5 text-primary" />
+  1664→        </div>
+  1665→        <h3 className="font-semibold text-base mb-2">{title}</h3>
+  1666→        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+  1667→      </div>
+  1668→    </motion.div>
+  1669→  );
+  1670→}
+  1671→
+  1672→function ProtocolStep({ num, title, desc, index, code, icon: StepIcon }: { num: string; title: string; desc: string; index: number; code?: string; icon?: React.ElementType }) {
+  1673→  const isCompleted = index < 2;
+  1674→  return (
+  1675→    <motion.div
+  1676→      variants={fadeUp}
+  1677→      initial="hidden"
+  1678→      whileInView="visible"
+  1679→      viewport={{ once: true }}
+  1680→      custom={index}
+  1681→      className="relative pl-16 md:pl-24"
+  1682→    >
+  1683→      {/* S4: Icon circle replacing the dot */}
+  1684→      <div className={`absolute left-[22px] md:left-[30px] top-1.5 size-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center ${isCompleted ? 'bg-primary/5 ring-2 ring-primary/10' : ''}`}>
+  1685→        {StepIcon && <StepIcon className="size-3 text-primary" />}
+  1686→      </div>
+  1687→      <span className="font-mono text-4xl md:text-5xl font-bold text-muted-foreground/15 leading-none select-none">
+  1688→        {num}
+  1689→      </span>
+  1690→      <h3 className="text-xl font-semibold mt-1">{title}</h3>
+  1691→      <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-md">{desc}</p>
+  1692→      {code && (
+  1693→        <code className="inline-block mt-3 text-xs font-mono text-primary/70 bg-primary/5 border border-primary/10 rounded px-2 py-1">
+  1694→          {code}
+  1695→        </code>
+  1696→      )}
+  1697→    </motion.div>
+  1698→  );
+  1699→}
+  1700→
+  1701→function AnimatedCounter({ target, prefix = '', suffix = '' }: { target: number; prefix?: string; suffix?: string }) {
+  1702→  const { ref, inView } = useInView(0.3);
+  1703→  const [count, setCount] = useState(0);
+  1704→
+  1705→  useEffect(() => {
+  1706→    if (!inView) return;
+  1707→    let raf: number;
+  1708→    const duration = 1200;
+  1709→    const start = performance.now();
+  1710→
+  1711→    const step = (now: number) => {
+  1712→      const elapsed = now - start;
+  1713→      const progress = Math.min(elapsed / duration, 1);
+  1714→      // Ease-out cubic
+  1715→      const eased = 1 - Math.pow(1 - progress, 3);
+  1716→      setCount(Math.round(eased * target));
+  1717→      if (progress < 1) {
+  1718→        raf = requestAnimationFrame(step);
+  1719→      }
+  1720→    };
+  1721→    raf = requestAnimationFrame(step);
+  1722→    return () => cancelAnimationFrame(raf);
+  1723→  }, [inView, target]);
+  1724→
+  1725→  return (
+  1726→    <span ref={ref}>
+  1727→      {prefix}{count}{suffix}
+  1728→    </span>
+  1729→  );
+  1730→}
+  1731→
+  1732→/* Code syntax helpers */
+  1733→function CodeLine({ indent = 0, children }: { indent?: number; children?: React.ReactNode }) {
+  1734→  return (
+  1735→    <div className="min-h-[1.75rem]" style={{ paddingLeft: `${indent * 1.5}rem` }}>
+  1736→      {children}
+  1737→    </div>
+  1738→  );
+  1739→}
+  1740→
+  1741→function KW({ children }: { children: React.ReactNode }) {
+  1742→  return <span className="text-primary">{children}</span>;
+  1743→}
+  1744→function Type({ children }: { children: React.ReactNode }) {
+  1745→  return <span className="text-emerald-300">{children}</span>;
+  1746→}
+  1747→function Fn({ children }: { children: React.ReactNode }) {
+  1748→  return <span className="text-foreground">{children}</span>;
+  1749→}
+  1750→function Str({ children }: { children: React.ReactNode }) {
+  1751→  return <span className="text-amber-400/80">{children}</span>;
+  1752→}
+  1753→function Num({ children }: { children: React.ReactNode }) {
+  1754→  return <span className="text-purple-400">{children}</span>;
+  1755→}
+  1756→function Com({ children }: { children: React.ReactNode }) {
+  1757→  return <span className="text-muted-foreground/60">{children}</span>;
+  1758→}
+  1759→function Var({ children }: { children: React.ReactNode }) {
+  1760→  return <span className="text-sky-300">{children}</span>;
+  1761→}
+  1762→
+  1763→/* ------------------------------------------------------------------ */
+  1764→/*  ParticleMesh Component (S1)                                       */
+  1765→/* ------------------------------------------------------------------ */
+  1766→
+  1767→function ParticleMesh({
+  1768→  className = '',
+  1769→  particleCount = 40,
+  1770→  maxDistance = 150,
+  1771→  color = 'oklch(0.72 0.17 162',
+  1772→}: {
+  1773→  className?: string;
+  1774→  particleCount?: number;
+  1775→  maxDistance?: number;
+  1776→  color?: string;
+  1777→}) {
+  1778→  const canvasRef = useRef<HTMLCanvasElement>(null);
+  1779→  const particlesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number }>>([]);
+  1780→  const animRef = useRef<number>(0);
+  1781→
+  1782→  const initParticles = useCallback((w: number, h: number) => {
+  1783→    particlesRef.current = Array.from({ length: particleCount }, () => ({
+  1784→      x: Math.random() * w,
+  1785→      y: Math.random() * h,
+  1786→      vx: (Math.random() - 0.5) * 0.3,
+  1787→      vy: (Math.random() - 0.5) * 0.3,
+  1788→    }));
+  1789→  }, [particleCount]);
+  1790→
+  1791→  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number) => {
+  1792→    ctx.clearRect(0, 0, w, h);
+  1793→    const particles = particlesRef.current;
+  1794→
+  1795→    for (let i = 0; i < particles.length; i++) {
+  1796→      const p = particles[i];
+  1797→      p.x += p.vx;
+  1798→      p.y += p.vy;
+  1799→      if (p.x < 0 || p.x > w) p.vx *= -1;
+  1800→      if (p.y < 0 || p.y > h) p.vy *= -1;
+  1801→
+  1802→      // Draw particle
+  1803→      ctx.beginPath();
+  1804→      ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+  1805→      ctx.fillStyle = `${color} / 0.15)`;
+  1806→      ctx.fill();
+  1807→
+  1808→      // Draw lines to nearby particles
+  1809→      for (let j = i + 1; j < particles.length; j++) {
+  1810→        const p2 = particles[j];
+  1811→        const dx = p.x - p2.x;
+  1812→        const dy = p.y - p2.y;
+  1813→        const dist = Math.sqrt(dx * dx + dy * dy);
+  1814→        if (dist < maxDistance) {
+  1815→          ctx.beginPath();
+  1816→          ctx.moveTo(p.x, p.y);
+  1817→          ctx.lineTo(p2.x, p2.y);
+  1818→          ctx.strokeStyle = `${color} / 0.06)`;
+  1819→          ctx.lineWidth = 0.5;
+  1820→          ctx.stroke();
+  1821→        }
+  1822→      }
+  1823→    }
+  1824→  }, [maxDistance, color]);
+  1825→
+  1826→  useEffect(() => {
+  1827→    const canvas = canvasRef.current;
+  1828→    if (!canvas) return;
+  1829→    const ctx = canvas.getContext('2d');
+  1830→    if (!ctx) return;
+  1831→
+  1832→    const w = window.innerWidth;
+  1833→    const h = window.innerHeight;
+  1834→    canvas.width = w;
+  1835→    canvas.height = h;
+  1836→    initParticles(w, h);
+  1837→
+  1838→    const animate = () => {
+  1839→      draw(ctx, w, h);
+  1840→      animRef.current = requestAnimationFrame(animate);
+  1841→    };
+  1842→    animate();
+  1843→
+  1844→    return () => cancelAnimationFrame(animRef.current);
+  1845→  }, [initParticles, draw]);
+  1846→
+  1847→  // Handle resize
+  1848→  useEffect(() => {
+  1849→    const handleResize = () => {
+  1850→      const canvas = canvasRef.current;
+  1851→      if (!canvas) return;
+  1852→      const w = window.innerWidth;
+  1853→      const h = window.innerHeight;
+  1854→      canvas.width = w;
+  1855→      canvas.height = h;
+  1856→      initParticles(w, h);
+  1857→    };
+  1858→
+  1859→    window.addEventListener('resize', handleResize);
+  1860→    return () => window.removeEventListener('resize', handleResize);
+  1861→  }, [initParticles]);
+  1862→
+  1863→  return <canvas ref={canvasRef} className={className} />;
+  1864→}
+  1865→
