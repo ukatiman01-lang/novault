@@ -1,0 +1,803 @@
+  2530→      {/* ===== F2: TESTIMONIALS ===== */}
+  2531→      <section className="py-24 md:py-32">
+  2532→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+  2533→          <SectionHeader
+  2534→            label="Community"
+  2535→            title="Trusted by Builders"
+  2536→            subtitle="Hear from the teams building with noVault."
+  2537→          />
+  2538→          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
+  2539→            {TESTIMONIALS.map((t, i) => (
+  2540→              <motion.div
+  2541→                key={t.name}
+  2542→                variants={fadeUp}
+  2543→                initial="hidden"
+  2544→                whileInView="visible"
+  2545→                viewport={{ once: true }}
+  2546→                custom={i}
+  2547→                className="rounded-lg border border-border bg-card/60 backdrop-blur-sm p-6 hover:border-primary/30 transition-colors duration-300"
+  2548→              >
+  2549→                {/* Star rating */}
+  2550→                <div className="flex items-center gap-0.5 mb-4">
+  2551→                  {Array.from({ length: t.stars }).map((_, si) => (
+  2552→                    <Star key={si} className="size-3.5 fill-amber-400 text-amber-400" />
+  2553→                  ))}
+  2554→                </div>
+  2555→                <p className="text-sm text-muted-foreground italic leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+  2556→                <div className="mt-4 pt-4 border-t border-border">
+  2557→                  <p className="text-sm font-semibold">{t.name}</p>
+  2558→                  <p className="text-xs text-muted-foreground mt-0.5">{t.role}, {t.company}</p>
+  2559→                </div>
+  2560→              </motion.div>
+  2561→            ))}
+  2562→          </div>
+  2563→        </div>
+  2564→      </section>
+  2565→
+  2566→      {/* ===== F2: PRICING ===== */}
+  2567→      <SectionDivider />
+  2568→      <section id="pricing" className="py-24 md:py-32">
+  2569→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+  2570→          <SectionHeader
+  2571→            label="Pricing"
+  2572→            title="Simple, Transparent Pricing"
+  2573→            subtitle="Start free. Scale as you grow. No hidden fees."
+  2574→          />
+  2575→          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
+  2576→            {PRICING.map((plan, i) => (
+  2577→              <motion.div
+  2578→                key={plan.tier}
+  2579→                variants={pricingFadeUp}
+  2580→                initial="hidden"
+  2581→                whileInView="visible"
+  2582→                viewport={{ once: true }}
+  2583→                custom={plan.highlighted ? i + 0.1 : i}
+  2584→                className={`rounded-lg border p-6 flex flex-col ${
+  2585→                  plan.highlighted
+  2586→                    ? 'border-primary/40 bg-primary/5 shadow-[0_0_30px_oklch(0.72_0.17_162/0.08)] relative'
+  2587→                    : 'border-border bg-card'
+  2588→                }`}
+  2589→              >
+  2590→                {plan.highlighted && (
+  2591→                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-mono">Popular</Badge>
+  2592→                )}
+  2593→                <h3 className="font-semibold text-base">{plan.tier}</h3>
+  2594→                <div className="mt-4 flex items-baseline gap-1">
+  2595→                  <span className="text-3xl font-bold font-mono text-primary">{plan.price}</span>
+  2596→                  {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+  2597→                </div>
+  2598→                <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{plan.desc}</p>
+  2599→                <ul className="mt-6 space-y-2.5 flex-1">
+  2600→                  {plan.features.map((f) => (
+  2601→                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+  2602→                      <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
+  2603→                      <span>{f}</span>
+  2604→                    </li>
+  2605→                  ))}
+  2606→                </ul>
+  2607→                <Button className="mt-8 w-full" variant={plan.highlighted ? 'default' : 'outline'}>
+  2608→                  {plan.cta} <ArrowRight className="size-3.5" />
+  2609→                </Button>
+  2610→              </motion.div>
+  2611→            ))}
+  2612→          </div>
+  2613→        </div>
+  2614→      </section>
+  2615→
+  2616→      {/* ===== TEAM ===== */}
+  2617→      <section className="py-24 md:py-32">
+  2618→        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+  2619→          <SectionHeader
+  2620→            label="Team"
+  2621→            title="Built by Cryptographers"
+  2622→            subtitle="A lean team of researchers and engineers building the future of private computation."
+  2623→          />
+  2624→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-16">
+  2625→            {TEAM_MEMBERS.map((member, i) => (
+  2626→              <motion.div
+  2627→                key={member.name}
+  2628→                variants={fadeUp}
+  2629→                initial="hidden"
+  2630→                whileInView="visible"
+  2631→                viewport={{ once: true }}
+  2632→                custom={i}
+  2633→                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.15)] transition-shadow duration-500 transition-colors duration-300"
+  2634→              >
+  2635→                <div className="size-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
+  2636→                  {member.name.split(' ').map(n => n[0]).join('')}
+  2637→                </div>
+  2638→                <h3 className="font-semibold text-base mt-4">{member.name}</h3>
+  2639→                <p className="text-xs font-mono text-primary uppercase tracking-wider mt-1">{member.role}</p>
+  2640→                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{member.bio}</p>
+  2641→                <div className="flex items-center gap-4 mt-4">
+  2642→                  <a href={member.socials.x} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on X`}>
+  2643→                    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+  2644→                  </a>
+  2645→                  <a href={member.socials.github} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on GitHub`}>
+  2646→                    <Github className="size-3.5" />
+  2647→                  </a>
+  2648→                </div>
+  2649→              </motion.div>
+  2650→            ))}
+  2651→          </div>
+  2652→        </div>
+  2653→      </section>
+  2654→
+  2655→      {/* ===== CONTACT ===== */}
+  2656→      <section id="contact" className="py-24 md:py-32">
+  2657→        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+  2658→          <SectionHeader
+  2659→            label="Contact"
+  2660→            title="Get in Touch"
+  2661→            subtitle="Have questions about integrating noVault? Our team is here to help."
+  2662→          />
+  2663→          <div className="mt-14 space-y-4">
+  2664→            <div>
+  2665→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Name *</label>
+  2666→              <Input
+  2667→                placeholder="Your name"
+  2668→                value={contactForm.name}
+  2669→                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+  2670→                className="bg-card border-border w-full"
+  2671→              />
+  2672→            </div>
+  2673→            <div>
+  2674→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Email *</label>
+  2675→              <Input
+  2676→                type="email"
+  2677→                placeholder="you@company.com"
+  2678→                value={contactForm.email}
+  2679→                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+  2680→                className="bg-card border-border w-full"
+  2681→              />
+  2682→            </div>
+  2683→            <div>
+  2684→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Subject</label>
+  2685→              <Input
+  2686→                placeholder="What is this about?"
+  2687→                value={contactForm.subject}
+  2688→                onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+  2689→                className="bg-card border-border w-full"
+  2690→              />
+  2691→            </div>
+  2692→            <div>
+  2693→              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Message *</label>
+  2694→              <Textarea
+  2695→                placeholder="Tell us about your project..."
+  2696→                value={contactForm.message}
+  2697→                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+  2698→                className="bg-card border-border w-full min-h-[120px] resize-none"
+  2699→              />
+  2700→            </div>
+  2701→            <Button onClick={handleContact} disabled={contactSending} className="w-full sm:w-auto">
+  2702→              {contactSending ? 'Sending...' : 'Send Message'} <ArrowRight className="size-3.5" />
+  2703→            </Button>
+  2704→            <p className="text-xs text-muted-foreground">We typically respond within 24 hours.</p>
+  2705→          </div>
+  2706→        </div>
+  2707→      </section>
+  2708→
+  2709→      {/* ===== F2: CAREERS ===== */}
+  2710→      <SectionDivider />
+  2711→      <section id="careers" className="py-24 md:py-32">
+  2712→        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+  2713→          <SectionHeader
+  2714→            label="Careers"
+  2715→            title="Join the Protocol"
+  2716→            subtitle="We are building the future of private computation. Help us ship it."
+  2717→          />
+  2718→          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-16">
+  2719→            {JOBS.map((job, i) => (
+  2720→              <motion.div
+  2721→                key={job.title}
+  2722→                variants={fadeUp}
+  2723→                initial="hidden"
+  2724→                whileInView="visible"
+  2725→                viewport={{ once: true }}
+  2726→                custom={i}
+  2727→                className="rounded-lg border bg-card p-5"
+  2728→              >
+  2729→                <div className="flex items-start justify-between gap-3">
+  2730→                  <div className="flex-1 min-w-0">
+  2731→                    <Badge variant="secondary" className="text-xs font-mono mb-2">{job.dept}</Badge>
+  2732→                    <h3 className="font-semibold text-sm">{job.title}</h3>
+  2733→                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+  2734→                      <MapPin className="size-3" />
+  2735→                      {job.location}
+  2736→                    </div>
+  2737→                  </div>
+  2738→                  <span className="shrink-0 text-xs font-mono text-muted-foreground border border-border rounded-md px-2 py-0.5">{job.type}</span>
+  2739→                </div>
+  2740→              </motion.div>
+  2741→            ))}
+  2742→          </div>
+  2743→          <div className="mt-10 text-center text-sm text-muted-foreground">
+  2744→            Don&rsquo;t see your role?{' '}
+  2745→            <a
+  2746→              href="#contact"
+  2747→              onClick={(e) => handleNavClick(e, '#contact')}
+  2748→              className="text-primary hover:underline"
+  2749→            >
+  2750→              Send us your resume
+  2751→            </a>
+  2752→          </div>
+  2753→        </div>
+  2754→      </section>
+  2755→
+  2756→      {/* ===== FOOTER ===== */}
+  2757→      <footer className="mt-auto border-t border-border bg-card/50">
+  2758→        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+  2759→          {/* R8: Footer status bar */}
+  2760→          <div className="glass-card rounded-lg p-4 mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+  2761→            <div className="flex items-center gap-3">
+  2762→              <span className="relative flex size-2.5">
+  2763→                <span className="animate-status-ring absolute inline-flex h-full w-full rounded-full bg-green-400" />
+  2764→                <span className="relative inline-flex rounded-full size-2.5 bg-green-500" />
+  2765→              </span>
+  2766→              <div>
+  2767→                <p className="text-sm font-medium">All Systems Operational</p>
+  2768→                <p className="text-[10px] font-mono text-muted-foreground">5 services monitored · 99.97% uptime (30d)</p>
+  2769→              </div>
+  2770→            </div>
+  2771→            <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground">
+  2772→              <span className="flex items-center gap-1.5"><Cpu className="size-3 text-primary/60" /> Proof: <span className="text-foreground">3.2ms</span></span>
+  2773→              <span className="flex items-center gap-1.5"><Fingerprint className="size-3 text-primary/60" /> Encrypt: <span className="text-foreground">0.8ms</span></span>
+  2774→              <span className="flex items-center gap-1.5"><Layers className="size-3 text-primary/60" /> Settle: <span className="text-foreground">12.1s</span></span>
+  2775→            </div>
+  2776→          </div>
+  2777→          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+  2778→            {/* Brand */}
+  2779→            <div className="col-span-2 md:col-span-1">
+  2780→              <div className="flex items-center gap-2 mb-4">
+  2781→                <Image src="/novault-logo.png" alt="noVault" width={24} height={24} className="rounded-sm" />
+  2782→                <span className="font-mono font-bold text-sm">no<span className="text-primary">Vault</span></span>
+  2783→              </div>
+  2784→              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+  2785→                Private-by-default infrastructure for the next internet.
+  2786→              </p>
+  2787→            </div>
+  2788→
+  2789→            {/* Product */}
+  2790→            <div>
+  2791→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Product</h4>
+  2792→              <ul className="space-y-2.5">
+  2793→                <li><a href="#features" onClick={(e) => handleNavClick(e, '#features')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+  2794→                <li><a href="#protocol" onClick={(e) => handleNavClick(e, '#protocol')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Protocol</a></li>
+  2795→                <li><a href="#developers" onClick={(e) => handleNavClick(e, '#developers')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">SDK</a></li>
+  2796→                <li><a href="#benchmarks" onClick={(e) => handleNavClick(e, '#benchmarks')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Benchmarks</a></li>
+  2797→                <li><a href="#ecosystem" onClick={(e) => handleNavClick(e, '#ecosystem')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Ecosystem</a></li>
+  2798→                <li><a href="#pricing" onClick={(e) => handleNavClick(e, '#pricing')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+  2799→              </ul>
+  2800→            </div>
+  2801→
+  2802→            {/* Resources */}
+  2803→            <div>
+  2804→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Resources</h4>
+  2805→              <ul className="space-y-2.5">
+  2806→                <li><a href='#developers' onClick={(e) => handleNavClick(e, '#developers')} className='footer-link text-sm text-muted-foreground hover:text-foreground transition-colors'>Documentation</a></li>
+  2807→                <li><a href='https://github.com/novaultech' target='_blank' rel='noopener noreferrer' className='footer-link text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'>
+  2808→                  <Github className='size-3.5' /> GitHub
+  2809→                </a></li>
+  2810→                <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
+  2811→                <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
+  2812→              </ul>
+  2813→            </div>
+  2814→
+  2815→            {/* Legal */}
+  2816→            <div>
+  2817→              <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Legal</h4>
+  2818→              <ul className="space-y-2.5">
+  2819→                <li>
+  2820→                  <button
+  2821→                    onClick={() => setTermsOpen(true)}
+  2822→                    className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors"
+  2823→                  >
+  2824→                    Terms of Service
+  2825→                  </button>
+  2826→                </li>
+  2827→                <li>
+  2828→                  <button
+  2829→                    onClick={() => setPrivacyOpen(true)}
+  2830→                    className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors"
+  2831→                  >
+  2832→                    Privacy Policy
+  2833→                  </button>
+  2834→                </li>
+  2835→              </ul>
+  2836→            </div>
+  2837→          </div>
+  2838→
+  2839→          {/* Bottom bar */}
+  2840→          <Separator className="mt-12 mb-6" />
+  2841→          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+  2842→            <p className="text-xs text-muted-foreground">
+  2843→              &copy; 2025 noVault. All rights reserved.
+  2844→            </p>
+  2845→            <a
+  2846→              href="https://x.com/novaultech"
+  2847→              target="_blank"
+  2848→              rel="noopener noreferrer"
+  2849→              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+  2850→            >
+  2851→              <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  2852→                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  2853→              </svg>
+  2854→              @novaultech
+  2855→            </a>
+  2856→          </div>
+  2857→
+  2858→          {/* Community / Social Links */}
+  2859→          <Separator className="mt-6 mb-4" />
+  2860→          <div className="flex items-center justify-center gap-4">
+  2861→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
+  2862→              <Github className="size-4" />
+  2863→            </a>
+  2864→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
+  2865→              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+  2866→            </a>
+  2867→            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Telegram">
+  2868→              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+  2869→            </a>
+  2870→          </div>
+  2871→        </div>
+  2872→      </footer>
+  2873→
+  2874→      {/* ===== TERMS DIALOG ===== */}
+  2875→      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+  2876→        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+  2877→          <DialogHeader>
+  2878→            <DialogTitle>Terms of Service</DialogTitle>
+  2879→            <DialogDescription>Last updated: June 2025</DialogDescription>
+  2880→          </DialogHeader>
+  2881→          {TERMS_CONTENT}
+  2882→        </DialogContent>
+  2883→      </Dialog>
+  2884→
+  2885→      {/* ===== PRIVACY DIALOG ===== */}
+  2886→      <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
+  2887→        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+  2888→          <DialogHeader>
+  2889→            <DialogTitle>Privacy Policy</DialogTitle>
+  2890→            <DialogDescription>Last updated: June 2025</DialogDescription>
+  2891→          </DialogHeader>
+  2892→          {PRIVACY_CONTENT}
+  2893→        </DialogContent>
+  2894→      </Dialog>
+  2895→
+  2896→      {/* ===== F3: COMMAND PALETTE DIALOG ===== */}
+  2897→      <Dialog open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen}>
+  2898→        <DialogContent className="sm:max-w-lg p-0 gap-0">
+  2899→          <div className="flex items-center border-b border-border px-4">
+  2900→            <Search className="size-4 text-muted-foreground shrink-0" />
+  2901→            <Input
+  2902→              autoFocus
+  2903→              value={cmdPaletteSearch}
+  2904→              onChange={(e) => setCmdPaletteSearch(e.target.value)}
+  2905→              placeholder="Search sections..."
+  2906→              className="border-0 focus-visible:ring-0 bg-transparent h-12 text-sm"
+  2907→            />
+  2908→          </div>
+  2909→          <div className="max-h-64 overflow-y-auto py-2">
+  2910→            {filteredCmdItems.length === 0 && (
+  2911→              <p className="text-sm text-muted-foreground text-center py-6">No results found.</p>
+  2912→            )}
+  2913→            {filteredCmdItems.map((item) => (
+  2914→              <button
+  2915→                key={item.label}
+  2916→                onClick={() => handleCmdSelect(item)}
+  2917→                className="w-full text-left px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex items-center gap-3"
+  2918→              >
+  2919→                {item.type === 'scroll' && <ArrowRight className="size-3.5 text-primary/50" />}
+  2920→                {item.type === 'terms' && <FileCode2 className="size-3.5 text-primary/50" />}
+  2921→                {item.type === 'privacy' && <Shield className="size-3.5 text-primary/50" />}
+  2922→                {item.label}
+  2923→              </button>
+  2924→            ))}
+  2925→          </div>
+  2926→        </DialogContent>
+  2927→      </Dialog>
+  2928→
+  2929→      {/* ===== F1: COOKIE CONSENT BANNER ===== */}
+  2930→      <AnimatePresence>
+  2931→        {!cookieConsent && (
+  2932→          <motion.div
+  2933→            initial={{ y: 100, opacity: 0 }}
+  2934→            animate={{ y: 0, opacity: 1 }}
+  2935→            exit={{ y: 100, opacity: 0 }}
+  2936→            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+  2937→            className="fixed bottom-0 left-0 right-0 z-[55] bg-card/95 backdrop-blur-xl border-t border-border"
+  2938→          >
+  2939→            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+  2940→              <p className="text-sm text-muted-foreground text-center sm:text-left">
+  2941→                We use essential cookies only. No tracking. No ads. Your privacy is our protocol.
+  2942→              </p>
+  2943→              <div className="flex items-center gap-3 shrink-0">
+  2944→                <Button
+  2945→                  variant="ghost"
+  2946→                  size="sm"
+  2947→                  onClick={() => setPrivacyOpen(true)}
+  2948→                >
+  2949→                  Learn More
+  2950→                </Button>
+  2951→                <Button
+  2952→                  size="sm"
+  2953→                  onClick={() => {
+  2954→                    try { localStorage.setItem('novault-cookies', 'accepted'); } catch {}
+  2955→                    setCookieConsent(true);
+  2956→                  }}
+  2957→                >
+  2958→                  Accept
+  2959→                </Button>
+  2960→              </div>
+  2961→            </div>
+  2962→          </motion.div>
+  2963→        )}
+  2964→      </AnimatePresence>
+  2965→
+  2966→      {/* ===== BACK TO TOP ===== */}
+  2967→      <AnimatePresence>
+  2968→        {showBackToTop && (
+  2969→          <motion.button
+  2970→            initial={{ opacity: 0, scale: 0.8 }}
+  2971→            animate={{ opacity: 1, scale: 1 }}
+  2972→            exit={{ opacity: 0, scale: 0.8 }}
+  2973→            transition={{ duration: 0.2 }}
+  2974→            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+  2975→            className="fixed bottom-6 right-6 z-50 size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-all cursor-pointer"
+  2976→            aria-label="Back to top"
+  2977→          >
+  2978→            <ArrowUp className="size-4" />
+  2979→          </motion.button>
+  2980→        )}
+  2981→      </AnimatePresence>
+  2982→    </div>
+  2983→  );
+  2984→}
+  2985→
+  2986→/* ------------------------------------------------------------------ */
+  2987→/*  Sub-components                                                     */
+  2988→/* ------------------------------------------------------------------ */
+  2989→
+  2990→function SectionWrapper({ children }: { children: React.ReactNode }) {
+  2991→  return <div className="border-t border-border">{children}</div>;
+  2992→}
+  2993→
+  2994→function SectionDivider() {
+  2995→  return (
+  2996→    <div className="flex items-center justify-center py-2">
+  2997→      <div className="flex items-center gap-3 w-full max-w-xs">
+  2998→        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-border" />
+  2999→        <span className="size-1.5 rounded-full bg-primary/40" />
+  3000→        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-border" />
+  3001→      </div>
+  3002→    </div>
+  3003→  );
+  3004→}
+  3005→
+  3006→function SectionHeader({ label, title, subtitle }: { label: string; title: string; subtitle: string }) {
+  3007→  return (
+  3008→    <div className="text-center max-w-2xl mx-auto">
+  3009→      <motion.p
+  3010→        variants={fadeUp}
+  3011→        initial="hidden"
+  3012→        whileInView="visible"
+  3013→        viewport={{ once: true }}
+  3014→        custom={0}
+  3015→        className="text-xs font-mono uppercase tracking-widest bg-gradient-to-r from-primary via-emerald-300 to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient-text_4s_ease-in-out_infinite] mb-4"
+  3016→      >
+  3017→        {label}
+  3018→      </motion.p>
+  3019→      <motion.h2
+  3020→        variants={fadeUp}
+  3021→        initial="hidden"
+  3022→        whileInView="visible"
+  3023→        viewport={{ once: true }}
+  3024→        custom={1}
+  3025→        className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight"
+  3026→      >
+  3027→        {title}
+  3028→      </motion.h2>
+  3029→      <motion.p
+  3030→        variants={fadeUp}
+  3031→        initial="hidden"
+  3032→        whileInView="visible"
+  3033→        viewport={{ once: true }}
+  3034→        custom={2}
+  3035→        className="mt-4 text-muted-foreground"
+  3036→      >
+  3037→        {subtitle}
+  3038→      </motion.p>
+  3039→    </div>
+  3040→  );
+  3041→}
+  3042→
+  3043→/* S7: FeatureCard with icon bounce on hover */
+  3044→function FeatureCard({ icon: Icon, title, desc, index }: { icon: React.ElementType; title: string; desc: string; index: number }) {
+  3045→  return (
+  3046→    <motion.div
+  3047→      whileHover={{ y: -4 }}
+  3048→      transition={{ type: 'tween', duration: 0.2 }}
+  3049→      className="group relative rounded-lg p-px"
+  3050→    >
+  3051→      {/* Gradient border on hover */}
+  3052→      <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/50 via-transparent to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  3053→      {/* Shimmer overlay */}
+  3054→      <div className="absolute inset-0 rounded-lg overflow-hidden">
+  3055→        <div className="animate-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+  3056→      </div>
+  3057→      <div className="relative rounded-lg border border-border bg-card p-6 glow-pulse-once">
+  3058→        {/* Numbered indicator */}
+  3059→        <span className="absolute top-6 left-6 text-xs font-mono text-muted-foreground/30 select-none">
+  3060→          {String(index + 1).padStart(2, '0')}
+  3061→        </span>
+  3062→        {/* Hover arrow */}
+  3063→        <ArrowRight className="absolute top-6 right-6 size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  3064→        {/* Icon with S7: bounce on hover */}
+  3065→        <div className="size-10 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
+  3066→          <Icon className="size-5 text-primary" />
+  3067→        </div>
+  3068→        <h3 className="font-semibold text-base mb-2">{title}</h3>
+  3069→        <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+  3070→      </div>
+  3071→    </motion.div>
+  3072→  );
+  3073→}
+  3074→
+  3075→function ProtocolStep({ num, title, desc, index, code, icon: StepIcon }: { num: string; title: string; desc: string; index: number; code?: string; icon?: React.ElementType }) {
+  3076→  const isCompleted = index < 2;
+  3077→  return (
+  3078→    <motion.div
+  3079→      variants={fadeUp}
+  3080→      initial="hidden"
+  3081→      whileInView="visible"
+  3082→      viewport={{ once: true }}
+  3083→      custom={index}
+  3084→      className="relative pl-16 md:pl-24"
+  3085→    >
+  3086→      {/* Icon circle replacing the dot */}
+  3087→      <div className={`absolute left-[22px] md:left-[30px] top-1.5 size-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center ${isCompleted ? 'bg-primary/5 ring-2 ring-primary/10' : ''}`}>
+  3088→        {StepIcon && <StepIcon className="size-3 text-primary" />}
+  3089→      </div>
+  3090→      <span className="font-mono text-4xl md:text-5xl font-bold text-muted-foreground/15 leading-none select-none">
+  3091→        {num}
+  3092→      </span>
+  3093→      <h3 className="text-xl font-semibold mt-1">{title}</h3>
+  3094→      <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-md">{desc}</p>
+  3095→      {code && (
+  3096→        <code className="inline-block mt-3 text-xs font-mono text-primary/70 bg-primary/5 border border-primary/10 rounded px-2 py-1">
+  3097→          {code}
+  3098→        </code>
+  3099→      )}
+  3100→    </motion.div>
+  3101→  );
+  3102→}
+  3103→
+  3104→function AnimatedCounter({ target, prefix = '', suffix = '' }: { target: number; prefix?: string; suffix?: string }) {
+  3105→  const { ref, inView } = useInView(0.3);
+  3106→  const [count, setCount] = useState(0);
+  3107→
+  3108→  useEffect(() => {
+  3109→    if (!inView) return;
+  3110→    let raf: number;
+  3111→    const duration = 1200;
+  3112→    const start = performance.now();
+  3113→
+  3114→    const step = (now: number) => {
+  3115→      const elapsed = now - start;
+  3116→      const progress = Math.min(elapsed / duration, 1);
+  3117→      // Ease-out cubic
+  3118→      const eased = 1 - Math.pow(1 - progress, 3);
+  3119→      setCount(Math.round(eased * target));
+  3120→      if (progress < 1) {
+  3121→        raf = requestAnimationFrame(step);
+  3122→      }
+  3123→    };
+  3124→    raf = requestAnimationFrame(step);
+  3125→    return () => cancelAnimationFrame(raf);
+  3126→  }, [inView, target]);
+  3127→
+  3128→  return (
+  3129→    <span ref={ref}>
+  3130→      {prefix}{count}{suffix}
+  3131→    </span>
+  3132→  );
+  3133→}
+  3134→
+  3135→/* S6: CodeLine with line numbers */
+  3136→function CodeLine({ indent = 0, lineNum, children }: { indent?: number; lineNum?: number; children?: React.ReactNode }) {
+  3137→  return (
+  3138→    <div className="min-h-[1.75rem] flex">
+  3139→      {lineNum !== undefined && (
+  3140→        <span className="w-8 shrink-0 text-right pr-3 text-xs font-mono text-muted-foreground/30 select-none leading-7">
+  3141→          {lineNum}
+  3142→        </span>
+  3143→      )}
+  3144→      <div style={{ paddingLeft: `${indent * 1.5}rem` }} className="flex-1">
+  3145→        {children}
+  3146→      </div>
+  3147→    </div>
+  3148→  );
+  3149→}
+  3150→
+  3151→function KW({ children }: { children: React.ReactNode }) {
+  3152→  return <span className="text-primary">{children}</span>;
+  3153→}
+  3154→function Type({ children }: { children: React.ReactNode }) {
+  3155→  return <span className="text-emerald-300">{children}</span>;
+  3156→}
+  3157→function Fn({ children }: { children: React.ReactNode }) {
+  3158→  return <span className="text-foreground">{children}</span>;
+  3159→}
+  3160→function Str({ children }: { children: React.ReactNode }) {
+  3161→  return <span className="text-amber-400/80">{children}</span>;
+  3162→}
+  3163→function Num({ children }: { children: React.ReactNode }) {
+  3164→  return <span className="text-purple-400">{children}</span>;
+  3165→}
+  3166→function Com({ children }: { children: React.ReactNode }) {
+  3167→  return <span className="text-muted-foreground/60">{children}</span>;
+  3168→}
+  3169→function Var({ children }: { children: React.ReactNode }) {
+  3170→  return <span className="text-sky-300">{children}</span>;
+  3171→}
+  3172→
+  3173→/* ------------------------------------------------------------------ */
+  3174→/*  S2: ParticleMesh Component (interactive with mouse)                 */
+  3175→/* ------------------------------------------------------------------ */
+  3176→
+  3177→function ParticleMesh({
+  3178→  className = '',
+  3179→  particleCount = 40,
+  3180→  maxDistance = 150,
+  3181→  color = 'oklch(0.72 0.17 162',
+  3182→}: {
+  3183→  className?: string;
+  3184→  particleCount?: number;
+  3185→  maxDistance?: number;
+  3186→  color?: string;
+  3187→}) {
+  3188→  const canvasRef = useRef<HTMLCanvasElement>(null);
+  3189→  const particlesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number }>>([]);
+  3190→  const animRef = useRef<number>(0);
+  3191→  const mouseRef = useRef({ x: -1000, y: -1000 });
+  3192→
+  3193→  const initParticles = useCallback((w: number, h: number) => {
+  3194→    particlesRef.current = Array.from({ length: particleCount }, () => ({
+  3195→      x: Math.random() * w,
+  3196→      y: Math.random() * h,
+  3197→      vx: (Math.random() - 0.5) * 0.3,
+  3198→      vy: (Math.random() - 0.5) * 0.3,
+  3199→    }));
+  3200→  }, [particleCount]);
+  3201→
+  3202→  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number) => {
+  3203→    ctx.clearRect(0, 0, w, h);
+  3204→    const particles = particlesRef.current;
+  3205→    const mx = mouseRef.current.x;
+  3206→    const my = mouseRef.current.y;
+  3207→    const attractRadius = 200;
+  3208→
+  3209→    for (let i = 0; i < particles.length; i++) {
+  3210→      const p = particles[i];
+  3211→
+  3212→      // S2: Attract particles toward mouse
+  3213→      if (mx > 0 && my > 0) {
+  3214→        const dx = mx - p.x;
+  3215→        const dy = my - p.y;
+  3216→        const dist = Math.sqrt(dx * dx + dy * dy);
+  3217→        if (dist < attractRadius && dist > 0) {
+  3218→          const force = 0.015 * (1 - dist / attractRadius);
+  3219→          p.vx += (dx / dist) * force;
+  3220→          p.vy += (dy / dist) * force;
+  3221→        }
+  3222→      }
+  3223→
+  3224→      // Dampen velocity
+  3225→      p.vx *= 0.99;
+  3226→      p.vy *= 0.99;
+  3227→
+  3228→      p.x += p.vx;
+  3229→      p.y += p.vy;
+  3230→      if (p.x < 0 || p.x > w) p.vx *= -1;
+  3231→      if (p.y < 0 || p.y > h) p.vy *= -1;
+  3232→      // Clamp position
+  3233→      p.x = Math.max(0, Math.min(w, p.x));
+  3234→      p.y = Math.max(0, Math.min(h, p.y));
+  3235→
+  3236→      // Draw particle
+  3237→      ctx.beginPath();
+  3238→      ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+  3239→      ctx.fillStyle = `${color} / 0.15)`;
+  3240→      ctx.fill();
+  3241→
+  3242→      // Draw lines to nearby particles
+  3243→      for (let j = i + 1; j < particles.length; j++) {
+  3244→        const p2 = particles[j];
+  3245→        const ddx = p.x - p2.x;
+  3246→        const ddy = p.y - p2.y;
+  3247→        const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+  3248→        if (dist < maxDistance) {
+  3249→          ctx.beginPath();
+  3250→          ctx.moveTo(p.x, p.y);
+  3251→          ctx.lineTo(p2.x, p2.y);
+  3252→          ctx.strokeStyle = `${color} / 0.06)`;
+  3253→          ctx.lineWidth = 0.5;
+  3254→          ctx.stroke();
+  3255→        }
+  3256→      }
+  3257→    }
+  3258→
+  3259→    // S2: Draw mouse glow
+  3260→    if (mx > 0 && my > 0) {
+  3261→      const gradient = ctx.createRadialGradient(mx, my, 0, mx, my, 200);
+  3262→      gradient.addColorStop(0, `${color} / 0.08)`);
+  3263→      gradient.addColorStop(1, `${color} / 0)`);
+  3264→      ctx.beginPath();
+  3265→      ctx.arc(mx, my, 200, 0, Math.PI * 2);
+  3266→      ctx.fillStyle = gradient;
+  3267→      ctx.fill();
+  3268→    }
+  3269→  }, [maxDistance, color]);
+  3270→
+  3271→  useEffect(() => {
+  3272→    const canvas = canvasRef.current;
+  3273→    if (!canvas) return;
+  3274→    const ctx = canvas.getContext('2d');
+  3275→    if (!ctx) return;
+  3276→
+  3277→    const w = window.innerWidth;
+  3278→    const h = window.innerHeight;
+  3279→    canvas.width = w;
+  3280→    canvas.height = h;
+  3281→    initParticles(w, h);
+  3282→
+  3283→    const animate = () => {
+  3284→      draw(ctx, w, h);
+  3285→      animRef.current = requestAnimationFrame(animate);
+  3286→    };
+  3287→    animate();
+  3288→
+  3289→    return () => cancelAnimationFrame(animRef.current);
+  3290→  }, [initParticles, draw]);
+  3291→
+  3292→  // Handle resize
+  3293→  useEffect(() => {
+  3294→    const handleResize = () => {
+  3295→      const canvas = canvasRef.current;
+  3296→      if (!canvas) return;
+  3297→      const w = window.innerWidth;
+  3298→      const h = window.innerHeight;
+  3299→      canvas.width = w;
+  3300→      canvas.height = h;
+  3301→      initParticles(w, h);
+  3302→    };
+  3303→
+  3304→    window.addEventListener('resize', handleResize);
+  3305→    return () => window.removeEventListener('resize', handleResize);
+  3306→  }, [initParticles]);
+  3307→
+  3308→  // S2: Track mouse position via window events
+  3309→  useEffect(() => {
+  3310→    const handleMouseMove = (e: MouseEvent) => {
+  3311→      const canvas = canvasRef.current;
+  3312→      if (!canvas) return;
+  3313→      const rect = canvas.getBoundingClientRect();
+  3314→      mouseRef.current = {
+  3315→        x: e.clientX - rect.left,
+  3316→        y: e.clientY - rect.top,
+  3317→      };
+  3318→    };
+  3319→    const handleMouseLeave = () => {
+  3320→      mouseRef.current = { x: -1000, y: -1000 };
+  3321→    };
+  3322→    window.addEventListener('mousemove', handleMouseMove);
+  3323→    window.addEventListener('mouseleave', handleMouseLeave);
+  3324→    return () => {
+  3325→      window.removeEventListener('mousemove', handleMouseMove);
+  3326→      window.removeEventListener('mouseleave', handleMouseLeave);
+  3327→    };
+  3328→  }, []);
+  3329→
+  3330→  return <canvas ref={canvasRef} className={className} />;
+  3331→}
+  3332→

@@ -43,6 +43,12 @@ import {
   BarChart3,
   Users,
   Cpu,
+  Play,
+  RotateCcw,
+  BookOpen,
+  FileText,
+  GraduationCap,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -528,6 +534,9 @@ const CMD_PALETTE_ITEMS = [
   { label: 'Careers', href: '#careers', type: 'scroll' as const },
   { label: 'Benchmarks', href: '#benchmarks', type: 'scroll' as const },
   { label: 'Ecosystem', href: '#ecosystem', type: 'scroll' as const },
+  { label: 'Playground', href: '#playground', type: 'scroll' as const },
+  { label: 'Governance', href: '#governance', type: 'scroll' as const },
+  { label: 'Resources', href: '#resources', type: 'scroll' as const },
   { label: 'Terms of Service', type: 'terms' as const },
   { label: 'Privacy Policy', type: 'privacy' as const },
 ];
@@ -597,6 +606,49 @@ const COMMUNITY_STATS = [
   { label: 'Discord Members', value: '8,200+', change: '+340 this week', icon: Users },
   { label: 'X Followers', value: '24.5K', change: '+1.2K this month', icon: Globe },
   { label: 'Countries', value: '67', change: 'Global community', icon: Activity },
+];
+
+/* ------------------------------------------------------------------ */
+/* R9: Governance / Token data                                        */
+/* ------------------------------------------------------------------ */
+
+const TOKEN_ALLOCATION = [
+  { label: 'Community & Ecosystem', pct: 40, color: 'bg-primary' },
+  { label: 'Core Contributors', pct: 20, color: 'bg-emerald-400' },
+  { label: 'Research Grants', pct: 15, color: 'bg-amber-400' },
+  { label: 'Treasury Reserve', pct: 15, color: 'bg-sky-400' },
+  { label: 'Early Investors', pct: 10, color: 'bg-muted-foreground/40' },
+];
+
+const GOVERNANCE_PRINCIPLES = [
+  { icon: Vote, title: 'On-Chain Governance', desc: 'All protocol parameters and upgrades are decided through on-chain proposals. No off-chain coordination required.' },
+  { icon: Users, title: 'One Token, One Vote', desc: 'Quadratic voting support ensures fair representation. Large holders cannot dominate governance outcomes.' },
+  { icon: Shield, title: 'Timelock Execution', desc: 'All passed proposals go through a 48-hour timelock before execution, allowing community review.' },
+  { icon: Globe, title: 'Cross-Chain Delegation', desc: 'Delegate your voting power across chains without bridging tokens. Vote where you hold.' },
+];
+
+/* ------------------------------------------------------------------ */
+/* R9: Resources Hub data                                              */
+/* ------------------------------------------------------------------ */
+
+const RESOURCES = [
+  { icon: BookOpen, title: 'Documentation', desc: 'Comprehensive guides, API references, and tutorials.', url: '#', tag: 'Docs' },
+  { icon: FileText, title: 'Whitepaper', desc: 'Technical specification of the noVault protocol.', url: '#', tag: 'Paper' },
+  { icon: GraduationCap, title: 'ZK Academy', desc: 'Learn zero-knowledge proofs from first principles.', url: '#', tag: 'Learn' },
+  { icon: Github, title: 'GitHub', desc: 'Open-source code, SDKs, and example contracts.', url: '#', tag: 'Code' },
+  { icon: FileCode2, title: 'Audit Reports', desc: 'Full audit reports from Trail of Bits, OpenZeppelin, and Zellic.', url: '#', tag: 'Security' },
+  { icon: TerminalSquare, title: 'API Playground', desc: 'Interactive API explorer for testing proofs.', url: '#', tag: 'Sandbox' },
+];
+
+/* ------------------------------------------------------------------ */
+/* R9: ZK Proof Playground data                                        */
+/* ------------------------------------------------------------------ */
+
+const PLAYGROUND_STEPS = [
+  { id: 'input', label: 'Input Data', icon: Database, desc: 'Define the private input for your proof.' },
+  { id: 'encrypt', label: 'Encrypt', icon: Lock, desc: 'Client-side encryption of the input data.' },
+  { id: 'prove', label: 'Generate Proof', icon: Shield, desc: 'ZK-SNARK proof generation in <4ms.' },
+  { id: 'verify', label: 'Verify', icon: CheckCircle2, desc: 'On-chain proof verification and settlement.' },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -724,6 +776,17 @@ export default function Home() {
   /* R8: Benchmark animation state */
   const [benchmarksVisible, setBenchmarksVisible] = useState(false);
   const benchmarksRef = useRef<HTMLDivElement>(null);
+
+  /* R9: ZK Playground state */
+  const [playgroundStep, setPlaygroundStep] = useState(0);
+  const [playgroundRunning, setPlaygroundRunning] = useState(false);
+  const [playgroundComplete, setPlaygroundComplete] = useState(false);
+
+  /* R9: Dismissible network status bar */
+  const [statusBarDismissed, setStatusBarDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem('novault-status-dismissed') === 'true'; } catch { return false; }
+  });
 
   /* S4: Section reveal refs */
   const useCasesRef = useSectionReveal();
@@ -1117,30 +1180,47 @@ export default function Home() {
       </nav>
 
       {/* ===== R8: NETWORK STATUS BAR ===== */}
-      <div className={"fixed top-16 left-0 right-0 z-40 bg-background/60 backdrop-blur-lg border-b border-border/50"}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-7 text-xs font-mono">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5">
-                <span className="relative flex size-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full size-1.5 bg-green-500" />
-                </span>
-                <span className="text-green-400 hidden sm:inline">All Systems Operational</span>
-                <span className="text-green-400 sm:hidden">Operational</span>
-              </span>
-              <span className="text-muted-foreground/40 hidden md:inline">|</span>
-              <span className="text-muted-foreground/60 hidden md:inline">Proof latency: 3.2ms</span>
-              <span className="text-muted-foreground/40 hidden lg:inline">|</span>
-              <span className="text-muted-foreground/60 hidden lg:inline">Testnet v0.3.0</span>
+      <AnimatePresence>
+        {!statusBarDismissed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-16 left-0 right-0 z-40 bg-background/60 backdrop-blur-lg border-b border-border/50 overflow-hidden"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-7 text-xs font-mono">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="relative flex size-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full size-1.5 bg-green-500" />
+                    </span>
+                    <span className="text-green-400 hidden sm:inline">All Systems Operational</span>
+                    <span className="text-green-400 sm:hidden">Operational</span>
+                  </span>
+                  <span className="text-muted-foreground/40 hidden md:inline">|</span>
+                  <span className="text-muted-foreground/60 hidden md:inline">Proof latency: 3.2ms</span>
+                  <span className="text-muted-foreground/40 hidden lg:inline">|</span>
+                  <span className="text-muted-foreground/60 hidden lg:inline">Testnet v0.3.0</span>
+                </div>
+                <div className="flex items-center gap-3 text-muted-foreground/40">
+                  <Activity className="size-3" />
+                  <span className="hidden sm:inline">status.novault.io</span>
+                  <button
+                    onClick={() => { setStatusBarDismissed(true); try { localStorage.setItem('novault-status-dismissed', 'true'); } catch {} }}
+                    className="ml-1 hover:text-foreground transition-colors text-muted-foreground/60"
+                    aria-label="Dismiss status bar"
+                  >
+                    &times;
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground/40">
-              <Activity className="size-3" />
-              <span className="hidden sm:inline">status.novault.io</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ===== HERO ===== */}
       <section className="relative min-h-screen flex items-center justify-center noise-overlay pt-24">
@@ -1186,10 +1266,8 @@ export default function Home() {
         />
 
         {/* Content */}
-        <motion.div
+        <div
           className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pt-24 pb-20"
-          animate={{ y: [0, -8, 0] }}
-          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
         >
           {/* Testnet Active Badge */}
           <motion.div
@@ -1263,7 +1341,7 @@ export default function Home() {
               </Button>
             </span>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ===== MARQUEE TICKER BAR ===== */}
@@ -1353,9 +1431,9 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center hover:-translate-y-1 hover:shadow-[0_4px_20px_oklch(0.72_0.17_162/0.08)] transition-all duration-300"
+                className="group rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center hover:-translate-y-1 hover:shadow-[0_4px_24px_oklch(0.72_0.17_162/0.12)] hover:border-primary/20 transition-all duration-300"
               >
-                <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
+                <div className="text-xl sm:text-2xl font-bold font-mono text-primary transition-transform duration-300 group-hover:scale-110">
                   {m.value}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
@@ -1799,20 +1877,28 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+                className="group rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 hover:shadow-[0_0_24px_oklch(0.72_0.17_162/0.08)] transition-all duration-500"
               >
-                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs font-mono mb-4">
-                  <Tag className="size-3 mr-1" />
-                  {post.tag}
-                </Badge>
-                <h3 className="font-semibold text-base leading-snug">{post.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{post.excerpt}</p>
-                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{post.date}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="size-3" />
-                    {post.readTime}
-                  </span>
+                {/* Gradient cover */}
+                <div className="h-28 bg-gradient-to-br from-primary/10 via-card to-primary/5 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,oklch(0.72_0.17_162/0.1),transparent_60%)]" />
+                  <div className="absolute bottom-3 left-4">
+                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-primary text-xs font-mono border-primary/10">
+                      <Tag className="size-3 mr-1" />
+                      {post.tag}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-semibold text-base leading-snug group-hover:text-primary transition-colors duration-300">{post.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{post.excerpt}</p>
+                  <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{post.date}</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {post.readTime}
+                    </span>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -2134,26 +2220,28 @@ export default function Home() {
             custom={0}
             className="mt-14 overflow-x-auto"
           >
-            <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border">
-                  <th className="text-left px-4 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">Feature</th>
-                  <th className="text-center px-4 py-3 font-mono text-xs uppercase tracking-wider text-primary">noVault</th>
-                  <th className="text-center px-4 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">Traditional ZK Bridges</th>
-                  <th className="text-center px-4 py-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">Basic Encryption</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARE_DATA.map((row, i) => (
-                  <tr key={row.row} className={i < COMPARE_DATA.length - 1 ? 'border-b border-border' : ''}>
-                    <td className="px-4 py-3 text-muted-foreground font-medium">{row.row}</td>
-                    <td className="px-4 py-3 text-center text-primary font-semibold">{row.novault}</td>
-                    <td className="px-4 py-3 text-center text-muted-foreground">{row.zkBridges}</td>
-                    <td className="px-4 py-3 text-center text-muted-foreground">{row.basic}</td>
+            <div className="rounded-xl border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    <th className="text-left px-5 py-3.5 font-mono text-xs uppercase tracking-wider text-muted-foreground">Feature</th>
+                    <th className="text-center px-4 py-3.5 font-mono text-xs uppercase tracking-wider text-primary bg-primary/5">noVault</th>
+                    <th className="text-center px-4 py-3.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hidden sm:table-cell">ZK Bridges</th>
+                    <th className="text-center px-4 py-3.5 font-mono text-xs uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Basic Encryption</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {COMPARE_DATA.map((row, i) => (
+                    <tr key={row.row} className={`group transition-colors duration-200 ${i < COMPARE_DATA.length - 1 ? 'border-b border-border/60' : ''} hover:bg-muted/10`}>
+                      <td className="px-5 py-3.5 text-muted-foreground font-medium text-sm">{row.row}</td>
+                      <td className="px-4 py-3.5 text-center text-primary font-semibold bg-primary/[0.03] group-hover:bg-primary/5 transition-colors duration-200">{row.novault}</td>
+                      <td className="px-4 py-3.5 text-center text-muted-foreground/70 hidden sm:table-cell">{row.zkBridges}</td>
+                      <td className="px-4 py-3.5 text-center text-muted-foreground/70 hidden sm:table-cell">{row.basic}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -2374,7 +2462,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/60 backdrop-blur-sm hover:border-primary/30 hover:bg-card/60 transition-all duration-300 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] text-sm text-muted-foreground/50 hover:text-foreground transition-colors duration-300 font-mono cursor-default"
+                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/60 backdrop-blur-sm hover:border-primary/30 hover:bg-card/80 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] transition-all duration-300 text-sm text-muted-foreground/50 hover:text-foreground font-mono cursor-default"
               >
                 {p}
               </motion.span>
@@ -2544,15 +2632,17 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card/60 backdrop-blur-sm p-6 hover:border-primary/30 transition-colors duration-300"
+                className="group relative rounded-lg border border-border bg-card/60 backdrop-blur-sm p-6 hover:border-primary/30 hover:shadow-[0_0_30px_oklch(0.72_0.17_162/0.08)] transition-all duration-500"
               >
+                {"/* Decorative large quote mark */"}
+                <span className="absolute top-4 right-5 text-6xl font-serif text-primary/[0.06] leading-none select-none group-hover:text-primary/10 transition-colors duration-500">&ldquo;</span>
                 {/* Star rating */}
                 <div className="flex items-center gap-0.5 mb-4">
                   {Array.from({ length: t.stars }).map((_, si) => (
                     <Star key={si} className="size-3.5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground italic leading-relaxed">&ldquo;{t.quote}&rdquo;</p>
+                <p className="text-sm text-muted-foreground italic leading-relaxed relative z-10">&ldquo;{t.quote}&rdquo;</p>
                 <div className="mt-4 pt-4 border-t border-border">
                   <p className="text-sm font-semibold">{t.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{t.role}, {t.company}</p>
@@ -2598,7 +2688,7 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{plan.desc}</p>
                 <ul className="mt-6 space-y-2.5 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground pricing-feature">
                       <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
                       <span>{f}</span>
                     </li>
@@ -2630,19 +2720,25 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.15)] transition-shadow duration-500 transition-colors duration-300"
+                className="group relative rounded-lg border border-border bg-card p-6 hover:border-primary/30 hover:shadow-[0_0_24px_oklch(0.72_0.17_162/0.12)] transition-all duration-500"
               >
-                <div className="size-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
-                  {member.name.split(' ').map(n => n[0]).join('')}
+                {/* Gradient border effect on hover */}
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/20 via-transparent to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+                <div className="flex items-center gap-4">
+                  <div className="size-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-sm group-hover:scale-105 group-hover:border-primary/30 transition-all duration-300">
+                    {member.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base">{member.name}</h3>
+                    <p className="text-xs font-mono text-primary uppercase tracking-wider mt-0.5">{member.role}</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-base mt-4">{member.name}</h3>
-                <p className="text-xs font-mono text-primary uppercase tracking-wider mt-1">{member.role}</p>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{member.bio}</p>
-                <div className="flex items-center gap-4 mt-4">
-                  <a href={member.socials.x} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on X`}>
+                <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{member.bio}</p>
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border/50">
+                  <a href={member.socials.x} className="text-muted-foreground/50 hover:text-foreground transition-colors" aria-label={`${member.name} on X`}>
                     <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                   </a>
-                  <a href={member.socials.github} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on GitHub`}>
+                  <a href={member.socials.github} className="text-muted-foreground/50 hover:text-foreground transition-colors" aria-label={`${member.name} on GitHub`}>
                     <Github className="size-3.5" />
                   </a>
                 </div>
@@ -2706,6 +2802,237 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== R9: ZK PROOF PLAYGROUND ===== */}
+      <SectionDivider />
+      <section id="playground" className="py-24 md:py-32 mesh-gradient">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Interactive"
+            title="ZK Proof Playground"
+            subtitle="See how a zero-knowledge proof is generated and verified in real-time."
+          />
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+            className="mt-14 rounded-xl border border-border bg-card overflow-hidden"
+          >
+            {/* Step indicators */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/20">
+              {PLAYGROUND_STEPS.map((step, i) => (
+                <div key={step.id} className="flex items-center gap-2">
+                  <div className={`size-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-500 ${
+                    i < playgroundStep
+                      ? 'bg-primary text-primary-foreground'
+                      : i === playgroundStep && playgroundRunning
+                        ? 'bg-primary/20 text-primary ring-2 ring-primary/40 animate-pulse'
+                        : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {i < playgroundStep ? (
+                      <CheckCircle2 className="size-4" />
+                    ) : (
+                      <step.icon className="size-3.5" />
+                    )}
+                  </div>
+                  <span className={`text-xs font-mono hidden sm:inline ${i === playgroundStep && playgroundRunning ? 'text-primary' : 'text-muted-foreground'}`}>
+                    {step.label}
+                  </span>
+                  {i < PLAYGROUND_STEPS.length - 1 && (
+                    <div className="w-6 sm:w-12 h-px mx-1 sm:mx-2 bg-border relative overflow-hidden">
+                      <div className={`absolute inset-y-0 left-0 bg-primary transition-all duration-700 ${i < playgroundStep ? 'w-full' : 'w-0'}`} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Output area */}
+            <div className="p-6 min-h-[180px] font-mono text-sm">
+              {!playgroundRunning && !playgroundComplete && (
+                <div className="flex flex-col items-center justify-center py-8 gap-4">
+                  <Sparkles className="size-8 text-primary/40" />
+                  <p className="text-muted-foreground text-sm text-center">Click "Run Proof" to simulate a zero-knowledge proof generation.</p>
+                  <Button onClick={() => { setPlaygroundRunning(true); setPlaygroundStep(0); setPlaygroundComplete(false); }} className="mt-2">
+                    <Play className="size-3.5 mr-2" /> Run Proof
+                  </Button>
+                </div>
+              )}
+              {playgroundRunning && !playgroundComplete && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Zap className="size-4" />
+                    <span className="text-xs uppercase tracking-wider">Step {playgroundStep + 1}: {PLAYGROUND_STEPS[playgroundStep]?.label}</span>
+                  </div>
+                  <div className="text-muted-foreground text-xs leading-relaxed">{PLAYGROUND_STEPS[playgroundStep]?.desc}</div>
+                  <div className="mt-2 h-1 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-primary rounded-full"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 1.5, ease: 'easeInOut', onComplete: () => {
+                        if (playgroundStep < PLAYGROUND_STEPS.length - 1) {
+                          setPlaygroundStep(prev => prev + 1);
+                        } else {
+                          setPlaygroundRunning(false);
+                          setPlaygroundComplete(true);
+                        }
+                      }}}
+                    />
+                  </div>
+                </div>
+              )}
+              {playgroundComplete && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <CheckCircle2 className="size-4" />
+                    <span className="text-xs uppercase tracking-wider">Proof Verified Successfully</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="rounded-md bg-muted/30 p-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Proof Size</p>
+                      <p className="text-primary font-semibold mt-1">847 bytes</p>
+                    </div>
+                    <div className="rounded-md bg-muted/30 p-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Generation Time</p>
+                      <p className="text-primary font-semibold mt-1">3.2ms</p>
+                    </div>
+                    <div className="rounded-md bg-muted/30 p-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Verification Gas</p>
+                      <p className="text-primary font-semibold mt-1">210,000</p>
+                    </div>
+                    <div className="rounded-md bg-muted/30 p-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Proof Hash</p>
+                      <p className="text-primary font-semibold mt-1 text-xs">0x7f3a...e2c1</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Button onClick={() => { setPlaygroundRunning(false); setPlaygroundComplete(false); setPlaygroundStep(0); }} variant="outline" size="sm">
+                      <RotateCcw className="size-3 mr-1.5" /> Reset
+                    </Button>
+                    <Button onClick={() => { setPlaygroundRunning(true); setPlaygroundStep(0); setPlaygroundComplete(false); }} size="sm">
+                      <Play className="size-3 mr-1.5" /> Run Again
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ===== R9: GOVERNANCE ===== */}
+      <SectionDivider />
+      <section id="governance" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Governance"
+            title="Community-Owned Protocol"
+            subtitle="noVault is governed by its token holders. Every decision is transparent and on-chain."
+          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-16">
+            {/* Token allocation bar */}
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={0}
+              className="rounded-xl border border-border bg-card p-6"
+            >
+              <h3 className="font-semibold text-base mb-6">Token Allocation</h3>
+              {/* Stacked bar */}
+              <div className="flex rounded-lg overflow-hidden h-4 mb-6">
+                {TOKEN_ALLOCATION.map((seg, i) => (
+                  <motion.div
+                    key={seg.label}
+                    className={`${seg.color} relative group/bar`}
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${seg.pct}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: i * 0.15, ease: 'easeOut' }}
+                  >
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card border border-border rounded px-1.5 py-0.5 text-[10px] font-mono text-foreground opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-10">
+                      {seg.pct}%
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="space-y-3">
+                {TOKEN_ALLOCATION.map((seg) => (
+                  <div key={seg.label} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className={`size-2.5 rounded-sm ${seg.color}`} />
+                      <span className="text-muted-foreground">{seg.label}</span>
+                    </div>
+                    <span className="font-mono text-xs text-muted-foreground/70">{seg.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+            {/* Governance principles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {GOVERNANCE_PRINCIPLES.map((p, i) => (
+                <motion.div
+                  key={p.title}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  custom={i}
+                  className="rounded-lg border border-border bg-card p-5 hover:border-primary/30 hover:shadow-[0_0_16px_oklch(0.72_0.17_162/0.08)] transition-all duration-300"
+                >
+                  <div className="size-9 rounded-md bg-primary/10 flex items-center justify-center mb-3">
+                    <p.icon className="size-4 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-sm">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{p.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== R9: RESOURCES HUB ===== */}
+      <SectionDivider />
+      <section id="resources" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Resources"
+            title="Everything You Need"
+            subtitle="From documentation to audit reports — all the tools to build with confidence."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16">
+            {RESOURCES.map((r, i) => (
+              <motion.a
+                key={r.title}
+                href={r.url}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="group rounded-lg border border-border bg-card p-5 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.08)] transition-all duration-300 block"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="size-9 rounded-md bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                    <r.icon className="size-4 text-primary" />
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] font-mono bg-muted/50 text-muted-foreground">{r.tag}</Badge>
+                </div>
+                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors duration-200">{r.title}</h3>
+                <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{r.desc}</p>
+                <div className="mt-3 flex items-center gap-1 text-xs text-primary/60 group-hover:text-primary transition-colors">
+                  <span>Explore</span>
+                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== F2: CAREERS ===== */}
       <SectionDivider />
       <section id="careers" className="py-24 md:py-32">
@@ -2754,7 +3081,9 @@ export default function Home() {
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="mt-auto border-t border-border bg-card/50">
+      <footer className="mt-auto border-t border-border bg-card/50 relative">
+        {/* Dot pattern background */}
+        <div className="absolute inset-0 dot-pattern opacity-30 pointer-events-none" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
           {/* R8: Footer status bar */}
           <div className="glass-card rounded-lg p-4 mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -2972,10 +3301,14 @@ export default function Home() {
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.2 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 z-50 size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-all cursor-pointer"
+            className="fixed bottom-6 right-6 z-50 size-11 rounded-full bg-card/80 backdrop-blur-sm border border-primary/20 flex items-center justify-center text-primary hover:bg-card hover:border-primary/40 hover:shadow-[0_0_16px_oklch(0.72_0.17_162/0.15)] transition-all cursor-pointer group"
             aria-label="Back to top"
           >
-            <ArrowUp className="size-4" />
+            <svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="oklch(0.72 0.17 162 / 0.1)" strokeWidth="2" />
+              <circle cx="22" cy="22" r="18" fill="none" stroke="oklch(0.72 0.17 162)" strokeWidth="2" strokeDasharray={`${2 * Math.PI * 18}`} strokeDashoffset={`${2 * Math.PI * 18 * (1 - scrollProgress / 100)}`} strokeLinecap="round" className="transition-[stroke-dashoffset] duration-150 ease-out" />
+            </svg>
+            <ArrowUp className="size-4 relative z-10 group-hover:-translate-y-0.5 transition-transform duration-200" />
           </motion.button>
         )}
       </AnimatePresence>
