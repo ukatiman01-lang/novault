@@ -17,6 +17,10 @@ import {
   CheckCircle2,
   Copy,
   Github,
+  Coins,
+  HeartPulse,
+  Building2,
+  Vote,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -44,6 +48,12 @@ import {
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui/tabs';
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                 */
@@ -80,6 +90,7 @@ function useInView(threshold = 0.15) {
 
 const NAV_LINKS = [
   { label: 'Features', href: '#features' },
+  { label: 'Use Cases', href: '#usecases' },
   { label: 'Protocol', href: '#protocol' },
   { label: 'Developers', href: '#developers' },
   { label: 'FAQ', href: '#faq' },
@@ -204,6 +215,60 @@ const PARTNERS = [
   'Gitcoin',
 ];
 
+const MARQUEE_ITEMS = [
+  'Testnet Live',
+  '2.4M+ Proofs Generated',
+  'Audited by Trail of Bits',
+  'Open Source MIT/Apache-2.0',
+  '12,400+ Developers',
+  '99.97% Uptime',
+  'Ethereum + Polygon + Arbitrum',
+];
+
+const USE_CASES = [
+  {
+    tab: 'DeFi',
+    icon: Coins,
+    title: 'Private DeFi',
+    desc: 'Private swaps, lending, and yield strategies. Users can transact without exposing portfolio holdings, transaction amounts, or trading strategies to the public mempool.',
+    stats: ['Private AMM pools', 'Shielded lending protocols', 'Confidential governance votes'],
+  },
+  {
+    tab: 'Healthcare',
+    icon: HeartPulse,
+    title: 'Healthcare Data',
+    desc: 'Enable HIPAA-compliant data sharing between institutions. Prove patient eligibility or treatment outcomes without exposing individual medical records.',
+    stats: ['Encrypted patient records', 'Cross-institution verification', 'Compliance-ready audits'],
+  },
+  {
+    tab: 'Enterprise',
+    icon: Building2,
+    title: 'Enterprise Solutions',
+    desc: 'Private supply chain verification, confidential business analytics, and secure data collaboration between organizations without revealing proprietary information.',
+    stats: ['Supply chain proof', 'Confidential analytics', 'Multi-party computation'],
+  },
+  {
+    tab: 'Governance',
+    icon: Vote,
+    title: 'DAO Governance',
+    desc: 'Commitment-based voting where preferences remain private until the reveal phase. Prevents vote buying and bandwagon effects in decentralized governance.',
+    stats: ['Commit-reveal voting', 'Delegation privacy', 'Quadratic voting support'],
+  },
+];
+
+const SECURITY_ITEMS = [
+  { icon: Shield, title: 'End-to-End Encryption', desc: 'All data is encrypted before leaving the client. Our protocol never sees plaintext.' },
+  { icon: Lock, title: 'Formally Verified Circuits', desc: 'Core ZK circuits verified using CirC and Lean 4 formal methods.' },
+  { icon: CheckCircle2, title: 'Independent Audits', desc: 'Audited by Trail of Bits (2024) and OpenZeppelin (2025). Reports public.' },
+  { icon: FileCode2, title: 'Bug Bounty Program', desc: 'Up to $500K bounty for critical vulnerabilities. Responsible disclosure.' },
+];
+
+const CHANGELOG = [
+  { version: 'v0.3.0', date: 'Jun 2025', title: 'Developer Preview', items: ['Full SDK release with TypeScript support', 'Solidity integration library', 'Interactive documentation portal', 'GitHub CI/CD templates'] },
+  { version: 'v0.2.0', date: 'Mar 2025', title: 'Testnet Expansion', items: ['Polygon and Arbitrum testnet support', 'Cross-chain proof verification', 'Developer dashboard beta', 'FHE module preview'] },
+  { version: 'v0.1.0', date: 'Dec 2024', title: 'Initial Testnet', items: ['Core ZK circuit library', 'Encrypted state model', 'Basic REST API', 'Ethereum Sepolia deployment'] },
+];
+
 const CODE_STRING = `pragma solidity 0.8.24;
 import {@noVault/sdk/"PrivateVault.sol"};
 
@@ -284,6 +349,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [contactSending, setContactSending] = useState(false);
+  const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
 
   // Expose dialog openers to window
   useEffect(() => {
@@ -310,6 +376,14 @@ export default function Home() {
       .then(r => r.json())
       .then(setLiveMetrics)
       .catch(() => {}); // Silently fail, use defaults
+  }, []);
+
+  // Fetch waitlist count
+  useEffect(() => {
+    fetch('/api/waitlist')
+      .then(r => r.json())
+      .then(d => setWaitlistCount(d.count ?? null))
+      .catch(() => {});
   }, []);
 
   // Smooth scroll handler
@@ -350,13 +424,28 @@ export default function Home() {
     setContactSending(false);
   };
 
-  const handleWaitlist = useCallback(() => {
+  const handleWaitlist = useCallback(async () => {
     if (!waitlistEmail || !waitlistEmail.includes('@')) {
       toast.error('Please enter a valid email address.');
       return;
     }
-    toast.success("You're on the list!", { description: "We'll notify you when noVault mainnet launches." });
-    setWaitlistEmail('');
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: waitlistEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setWaitlistCount(data.count);
+        toast.success("You're on the list!", { description: `You're #${data.count} on the list!` });
+        setWaitlistEmail('');
+      } else {
+        toast.error(data.error || 'Something went wrong.');
+      }
+    } catch {
+      toast.error('Failed to join waitlist. Please try again.');
+    }
   }, [waitlistEmail]);
 
   return (
@@ -453,11 +542,13 @@ export default function Home() {
         />
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background z-[1]" />
+        {/* S1: Particle/Mesh Network Canvas */}
+        <ParticleMesh className="absolute inset-0 z-[2] pointer-events-none" />
         {/* Radial glow */}
-        <div className="absolute inset-0 z-[2] bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,oklch(0.72_0.17_162/0.08),transparent)]" />
+        <div className="absolute inset-0 z-[3] bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,oklch(0.72_0.17_162/0.08),transparent)]" />
         {/* Animated grid overlay */}
         <div
-          className="absolute inset-0 z-[3] pointer-events-none opacity-[0.03]"
+          className="absolute inset-0 z-[4] pointer-events-none opacity-[0.03]"
           style={{
             backgroundImage:
               'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
@@ -467,17 +558,17 @@ export default function Home() {
 
         {/* S1: Floating Orbs */}
         <motion.div
-          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[4]"
+          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[5]"
           animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
           transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[4]"
+          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[5]"
           animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
           transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[4]"
+          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[5]"
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 7 }}
         />
@@ -515,7 +606,7 @@ export default function Home() {
             <motion.span
               variants={fadeUp}
               custom={2}
-              className="block text-4xl md:text-6xl lg:text-7xl text-primary mt-1"
+              className="block text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-primary via-emerald-300 to-primary bg-clip-text text-transparent mt-1"
             >
               Infrastructure
             </motion.span>
@@ -555,6 +646,18 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      {/* ===== S2: MARQUEE TICKER BAR ===== */}
+      <div className="border-b border-border bg-card/30 py-2 text-xs font-mono text-muted-foreground/70 overflow-hidden">
+        <div className="animate-marquee flex items-center gap-8 whitespace-nowrap w-max">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+            <span key={i} className="flex items-center gap-8">
+              <span>{item}</span>
+              <span className="size-1 rounded-full bg-primary/40" />
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ===== TECH STACK BAR ===== */}
       <SectionWrapper>
@@ -668,6 +771,62 @@ export default function Home() {
               <FeatureCard key={f.title} {...f} index={i} />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ===== F1: USE CASES ===== */}
+      <SectionDivider />
+      <section id="usecases" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Use Cases"
+            title="Privacy for Every Industry"
+            subtitle="From DeFi to healthcare — noVault enables confidential computation across sectors."
+          />
+
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+            className="mt-14"
+          >
+            <Tabs defaultValue="DeFi">
+              <TabsList className="bg-card/50 border border-border rounded-lg p-1 h-auto flex flex-wrap">
+                {USE_CASES.map((uc) => (
+                  <TabsTrigger
+                    key={uc.tab}
+                    value={uc.tab}
+                    className="text-xs font-mono px-4 py-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-md"
+                  >
+                    {uc.tab}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {USE_CASES.map((uc) => (
+                <TabsContent key={uc.tab} value={uc.tab} className="mt-8 rounded-lg border border-border bg-card p-6 sm:p-8">
+                  <div className="flex items-start gap-4">
+                    <div className="size-10 shrink-0 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+                      <uc.icon className="size-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">{uc.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{uc.desc}</p>
+                      <ul className="mt-4 space-y-2">
+                        {uc.stats.map((stat) => (
+                          <li key={stat} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
+                            <span>{stat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </motion.div>
         </div>
       </section>
 
@@ -794,6 +953,46 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== F4: CHANGELOG ===== */}
+      <SectionDivider />
+      <section id="changelog" className="py-24 md:py-32">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Changelog"
+            title="Recent Updates"
+            subtitle="Every release is documented. Every change is auditable."
+          />
+
+          <div className="mt-14 space-y-8">
+            {CHANGELOG.map((entry, i) => (
+              <motion.div
+                key={entry.version}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="relative rounded-lg border border-border bg-card p-6"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-xs font-mono text-primary bg-primary/10 px-2.5 py-1 rounded-md">{entry.version}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{entry.date}</span>
+                </div>
+                <h3 className="font-semibold text-base">{entry.title}</h3>
+                <ul className="mt-3 space-y-2">
+                  {entry.items.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="size-3.5 text-primary/60 shrink-0 mt-1" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== SECTION DIVIDER ===== */}
       <SectionDivider />
 
@@ -812,7 +1011,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true }}
             custom={0}
-            className="mt-14 rounded-lg border border-border bg-card overflow-hidden"
+            className="mt-14 rounded-lg border border-border bg-card overflow-hidden scan-line"
           >
             {/* Code block header with copy button */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
@@ -871,6 +1070,65 @@ export default function Home() {
                   <AnimatedCounter target={s.value} prefix={s.prefix} suffix={s.suffix} />
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== F2: SECURITY ===== */}
+      <SectionDivider />
+      <section id="security" className="py-24 md:py-32 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,oklch(0.72_0.17_162/0.06),transparent)] pointer-events-none" />
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Security"
+            title="Security First, Always"
+            subtitle="Multiple layers of protection from formally verified circuits to independent audits."
+          />
+
+          {/* Security stat counters */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-14 mb-10">
+            {[
+              { value: 3, suffix: '', label: 'Audits Completed' },
+              { value: 500, prefix: '$', suffix: 'K', label: 'Max Bounty' },
+              { value: 0, suffix: '', label: 'Critical Findings' },
+              { value: 24, suffix: '/7', label: 'Monitoring' },
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card/50 p-4 sm:p-5 text-center"
+              >
+                <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
+                  <AnimatedCounter target={s.value} prefix={s.prefix} suffix={s.suffix} />
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Security cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {SECURITY_ITEMS.map((item, i) => (
+              <motion.div
+                key={item.title}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+              >
+                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <item.icon className="size-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-base">{item.title}</h3>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -969,7 +1227,9 @@ export default function Home() {
                 custom={1}
                 className="mt-4 text-xs text-muted-foreground"
               >
-                No spam. We only send major protocol updates.
+                {waitlistCount !== null
+                  ? `Join ${(waitlistCount + 1).toLocaleString()}+ builders on the waitlist`
+                  : 'No spam. We only send major protocol updates.'}
               </motion.p>
             </div>
           </div>
@@ -1056,13 +1316,18 @@ export default function Home() {
             custom={0}
             className="flex flex-wrap items-center justify-center gap-3 mt-14"
           >
-            {PARTNERS.map((p) => (
-              <span
+            {PARTNERS.map((p, i) => (
+              <motion.span
                 key={p}
-                className="inline-flex items-center px-4 py-2 rounded-full border border-border bg-card/50 text-sm text-muted-foreground font-mono"
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] text-sm text-muted-foreground/50 hover:text-foreground transition-colors duration-300 font-mono cursor-default"
               >
                 {p}
-              </span>
+              </motion.span>
             ))}
           </motion.div>
           <motion.p
@@ -1493,4 +1758,107 @@ function Com({ children }: { children: React.ReactNode }) {
 }
 function Var({ children }: { children: React.ReactNode }) {
   return <span className="text-sky-300">{children}</span>;
+}
+
+/* ------------------------------------------------------------------ */
+/*  ParticleMesh Component (S1)                                       */
+/* ------------------------------------------------------------------ */
+
+function ParticleMesh({
+  className = '',
+  particleCount = 40,
+  maxDistance = 150,
+  color = 'oklch(0.72 0.17 162',
+}: {
+  className?: string;
+  particleCount?: number;
+  maxDistance?: number;
+  color?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number }>>([]);
+  const animRef = useRef<number>(0);
+
+  const initParticles = useCallback((w: number, h: number) => {
+    particlesRef.current = Array.from({ length: particleCount }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+    }));
+  }, [particleCount]);
+
+  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    ctx.clearRect(0, 0, w, h);
+    const particles = particlesRef.current;
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+
+      // Draw particle
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `${color} / 0.15)`;
+      ctx.fill();
+
+      // Draw lines to nearby particles
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dx = p.x - p2.x;
+        const dy = p.y - p2.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < maxDistance) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = `${color} / 0.06)`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }, [maxDistance, color]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.width = w;
+    canvas.height = h;
+    initParticles(w, h);
+
+    const animate = () => {
+      draw(ctx, w, h);
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => cancelAnimationFrame(animRef.current);
+  }, [initParticles, draw]);
+
+  // Handle resize
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+      initParticles(w, h);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [initParticles]);
+
+  return <canvas ref={canvasRef} className={className} />;
 }
