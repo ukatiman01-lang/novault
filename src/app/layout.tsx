@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://novault.io'),
   title: "noVault — Private-by-Default Infrastructure for the Next Internet",
   description:
     "noVault provides private-by-default infrastructure for the next internet. Zero-knowledge proofs, encrypted computation, and privacy-first protocols.",
@@ -37,6 +38,7 @@ export const metadata: Metadata = {
       "Private-by-default infrastructure for the next internet. Built for a world where privacy is not optional.",
     siteName: "noVault",
     type: "website",
+    images: ['/og-image.png'],
   },
   twitter: {
     card: "summary_large_image",

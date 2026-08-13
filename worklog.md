@@ -254,3 +254,107 @@ Priority Recommendations for Next Phase:
 8. Performance: lazy-load below-fold sections
 9. Add internationalization (i18n) support
 10. Add contact form or support chat widget
+
+---
+Task ID: review-4
+Agent: Enhancement Agent (fullstack-developer)
+Task: API endpoints, Team section, Contact form, OG image, enhanced roadmap
+
+Work Log:
+- Added `images: ['/og-image.png']` to layout.tsx openGraph metadata
+- Verified favicon already set to `/novault-logo.png`
+- Created `/api/metrics/route.ts` — simulated protocol metrics with jitter for real-time feel
+- Created `/api/contact/route.ts` — POST handler with validation (name, email, message required, email regex)
+- Added Textarea import from @/components/ui/textarea
+- Added TEAM_MEMBERS data constant (4 members: Alex Chen, Dr. Sarah Kim, Marcus Webb, Yuki Tanaka)
+- Added metric formatter functions (formatProofs, formatValue, formatDevs, formatUptime)
+- Added liveMetrics state + useEffect fetch from /api/metrics on mount
+- Updated Metrics Bar to use live API data when available, with pulsing green 'Live' indicator
+- Replaced Roadmap section with card-based layout: completed cards get primary/5 bg + primary/20 border, active cards get primary/40 border + emerald glow shadow, upcoming cards get opacity-70
+- Added Team section (2x2 grid, avatar initials, role, bio, X/GitHub social links, hover border transition)
+- Added Contact form section (name, email, subject, message textarea, POST to /api/contact, toast feedback, 'Sending...' disabled state)
+- Updated Footer Resources: Documentation now links to #developers, GitHub links to github.com/novaultech with icon, Roadmap kept as anchor
+- Section order: Hero → Tech Stack → Metrics (Live) → Features → Protocol → Roadmap (cards) → Developers → FAQ → Waitlist → CTA → Backed By → Team → Contact → Footer
+
+### Files Created
+- src/app/api/metrics/route.ts
+- src/app/api/contact/route.ts
+
+### Files Modified
+- src/app/layout.tsx (added openGraph.images)
+- src/app/page.tsx (all 5 enhancements)
+
+### Build Status
+- Compiled successfully, 6/6 routes (3 static + 3 dynamic API)
+- Lint: PASS (0 errors, 0 warnings)
+
+---
+Task ID: review-4-verify
+Agent: Review Agent (webDevReview cron)
+Task: QA verification after round 4
+
+Work Log:
+- Fixed metadataBase warning in layout.tsx (added new URL(https://novault.io))
+- Ran bun run lint — PASS (0 errors, 0 warnings, 0 build warnings)
+- Ran npx next build — PASS (6/6 routes: 3 static + /api + /api/contact + /api/metrics)
+- Static HTML verification (91,257 chars, up from 77,532):
+  - 19/21 content checks pass
+  - 2 client-only items (Live indicator, Sending state) correctly absent from static HTML
+- page.tsx: 1,496 lines (up from 1,290)
+- New files verified: api/metrics/route.ts (822 bytes), api/contact/route.ts (965 bytes), og-image.png (84KB)
+
+---
+CURRENT PROJECT STATUS ASSESSMENT (Handover)
+
+Overall Status: STABLE — Production-quality Web3 landing page with backend
+- Build: PASS (0 errors, 0 warnings)
+- Lint: PASS (0 errors, 0 warnings)
+- Routes: 6 total (3 static + 3 API dynamic)
+- page.tsx: 1,496 lines
+- Static HTML: 91,257 chars
+- API endpoints: 2 (/api/metrics GET, /api/contact POST)
+- Generated images: 3 (logo, hero-bg, og-image)
+
+Completed Sections (20 total):
+1. Scroll progress indicator
+2. Sticky navbar (5 links: Features, Protocol, Developers, FAQ, Roadmap)
+3. Hero — AI bg, 3 floating orbs, Testnet Active badge, grid overlay, float animation
+4. Tech Stack bar
+5. Protocol Metrics Bar — LIVE API data with pulsing indicator
+6. Features — 6 numbered cards with gradient borders, shimmer, hover arrows
+7. Protocol — 3-step timeline with icons, pulse dots, inline code
+8. Roadmap — 4-phase card-based layout (completed=primary bg, active=glow, upcoming=opacity)
+9. Developers — code block with copy button, animated counters
+10. FAQ — 6-item numbered Accordion with left-border highlight
+11. Waitlist — gradient card, email input, sonner toast feedback
+12. CTA — grid-bg, trust indicators
+13. Backed By — 6 partner badges
+14. Team — 4 member cards (initials avatar, role, bio, social links)
+15. Contact — form (name/email/subject/message), POST to API, toast feedback
+16. Footer — 4-column, GitHub/Discord/Telegram links, Terms/Privacy dialogs
+17. Terms of Service dialog (8-section legal)
+18. Privacy Policy dialog (8-section legal)
+19. Back-to-top button
+20. Section dividers with emerald dots
+
+Backend API:
+- GET /api/metrics — simulated protocol stats with real-time jitter
+- POST /api/contact — validated contact form with acknowledgment
+
+Unresolved Issues:
+- Dev server watchdog needed in sandbox (start-dev.sh exists)
+- Platform Caddy proxy shows Z.ai placeholder (infrastructure, not code)
+- Contact form is simulated (no real email delivery)
+- Metrics API returns simulated data (no real database)
+
+Priority Recommendations for Next Phase:
+1. Add Prisma schema for real data persistence
+2. Add blog/news section with MDX content
+3. Add interactive 3D visualization or canvas animation in hero
+4. Add dark/light theme toggle with next-themes
+5. Add i18n support
+6. Add proper 404 page
+7. Performance: lazy-load below-fold sections
+8. Add Web3 wallet connection button
+9. Add changelog/release notes page
+10. Add real email service integration for contact form

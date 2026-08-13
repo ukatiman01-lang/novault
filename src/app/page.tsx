@@ -43,6 +43,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 /* ------------------------------------------------------------------ */
 /*  Animation helpers                                                 */
@@ -168,6 +169,32 @@ const METRICS = [
   { value: '99.97%', label: 'Uptime' },
 ];
 
+/* ------------------------------------------------------------------ */
+/*  Metric formatters                                                 */
+/* ------------------------------------------------------------------ */
+
+function formatProofs(n: number): string {
+  const m = n / 1_000_000;
+  return `${m.toFixed(1)}M+`;
+}
+function formatValue(n: number): string {
+  const m = n / 1_000_000;
+  return `$${Math.round(m)}M+`;
+}
+function formatDevs(n: number): string {
+  return `${n.toLocaleString()}+`;
+}
+function formatUptime(n: number): string {
+  return `${n.toFixed(2)}%`;
+}
+
+const TEAM_MEMBERS = [
+  { name: 'Alex Chen', role: 'Co-Founder & CEO', bio: 'Former protocol engineer at Ethereum Foundation. ZK circuit design and cryptographic protocol architecture.', socials: { x: '#', github: '#' } },
+  { name: 'Dr. Sarah Kim', role: 'Co-Founder & CTO', bio: 'PhD in cryptographic protocols from MIT. Led privacy research at Trail of Bits for 4 years.', socials: { x: '#', github: '#' } },
+  { name: 'Marcus Webb', role: 'Lead Engineer', bio: 'Core contributor to PLONK proof system. Previously at Consensys and Polygon Zero.', socials: { x: '#', github: '#' } },
+  { name: 'Yuki Tanaka', role: 'Head of Research', bio: 'Published 12 peer-reviewed papers on MPC and FHE. Former research scientist at DFINITY.', socials: { x: '#', github: '#' } },
+];
+
 const PARTNERS = [
   'Ethereum Foundation',
   'a16z Crypto',
@@ -247,6 +274,7 @@ const PRIVACY_CONTENT = (
 /* ------------------------------------------------------------------ */
 
 export default function Home() {
+  const [liveMetrics, setLiveMetrics] = useState<null | Record<string, unknown>>(null);
   const [termsOpen, setTermsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -254,6 +282,8 @@ export default function Home() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [copied, setCopied] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [contactSending, setContactSending] = useState(false);
 
   // Expose dialog openers to window
   useEffect(() => {
@@ -274,6 +304,14 @@ export default function Home() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Fetch live metrics
+  useEffect(() => {
+    fetch('/api/metrics')
+      .then(r => r.json())
+      .then(setLiveMetrics)
+      .catch(() => {}); // Silently fail, use defaults
+  }, []);
+
   // Smooth scroll handler
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -286,6 +324,31 @@ export default function Home() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, []);
+
+  const handleContact = async () => {
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      toast.error('Please fill in all required fields.');
+      return;
+    }
+    setContactSending(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Message sent!', { description: "We'll get back to you within 24 hours." });
+        setContactForm({ name: '', email: '', subject: '', message: '' });
+      } else {
+        toast.error(data.error || 'Something went wrong.');
+      }
+    } catch {
+      toast.error('Failed to send message. Please try again.');
+    }
+    setContactSending(false);
+  };
 
   const handleWaitlist = useCallback(() => {
     if (!waitlistEmail || !waitlistEmail.includes('@')) {
@@ -535,7 +598,32 @@ export default function Home() {
             subtitle="Real-time metrics from the noVault testnet."
           />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-14">
-            {METRICS.map((m, i) => (
+            {([
+              {
+                value: liveMetrics
+                  ? formatProofs(liveMetrics.proofsGenerated as number)
+                  : METRICS[0].value,
+                label: METRICS[0].label,
+              },
+              {
+                value: liveMetrics
+                  ? formatValue(liveMetrics.valueSecured as number)
+                  : METRICS[1].value,
+                label: METRICS[1].label,
+              },
+              {
+                value: liveMetrics
+                  ? formatDevs(liveMetrics.developers as number)
+                  : METRICS[2].value,
+                label: METRICS[2].label,
+              },
+              {
+                value: liveMetrics
+                  ? formatUptime(liveMetrics.uptime as number)
+                  : METRICS[3].value,
+                label: METRICS[3].label,
+              },
+            ] as const).map((m, i) => (
               <motion.div
                 key={m.label}
                 variants={fadeUp}
@@ -554,6 +642,15 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
+          {liveMetrics && (
+            <div className="flex items-center justify-center mt-6 gap-2">
+              <span className="relative flex size-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full size-2 bg-primary" />
+              </span>
+              <span className="text-xs font-mono text-primary">Live</span>
+            </div>
+          )}
         </div>
       </SectionWrapper>
 
@@ -612,11 +709,11 @@ export default function Home() {
           />
 
           <div className="mt-16">
-            {/* Desktop: horizontal timeline */}
+            {/* Desktop: horizontal card timeline */}
             <div className="hidden md:block relative">
               {/* Connecting line */}
-              <div className="absolute top-5 left-[calc(12.5%+10px)] right-[calc(12.5%+10px)] h-px bg-border" />
-              <div className="grid grid-cols-4 gap-6">
+              <div className="absolute top-8 left-[calc(12.5%+10px)] right-[calc(12.5%+10px)] h-px bg-border" />
+              <div className="grid grid-cols-4 gap-5">
                 {ROADMAP.map((m, i) => (
                   <motion.div
                     key={m.phase}
@@ -625,32 +722,38 @@ export default function Home() {
                     whileInView="visible"
                     viewport={{ once: true }}
                     custom={i}
-                    className="relative pt-12 text-center"
+                    className={`rounded-lg border bg-card p-5 text-center relative ${
+                      m.status === 'completed'
+                        ? 'border-primary/20 bg-primary/5'
+                        : m.status === 'active'
+                          ? 'border-primary/40 shadow-[0_0_15px_oklch(0.72_0.17_162/0.1)]'
+                          : 'opacity-70'
+                    }`}
                   >
-                    {/* Dot */}
-                    <div className="absolute top-3 left-1/2 -translate-x-1/2">
+                    {/* Status dot above card */}
+                    <div className="absolute -top-[9px] left-1/2 -translate-x-1/2">
                       {m.status === 'completed' && (
-                        <CheckCircle2 className="size-5 text-primary" />
+                        <CheckCircle2 className="size-[18px] text-primary bg-card rounded-full" />
                       )}
                       {m.status === 'active' && (
-                        <span className="animate-pulse-dot block size-3 rounded-full bg-primary ring-4 ring-primary/20" />
+                        <span className="animate-pulse-dot block size-[18px] rounded-full bg-primary ring-4 ring-primary/20" />
                       )}
                       {m.status === 'upcoming' && (
-                        <span className="block size-3 rounded-full bg-muted-foreground/30" />
+                        <span className="block size-[18px] rounded-full bg-muted-foreground/30" />
                       )}
                     </div>
-                    <p className="text-xs font-mono text-muted-foreground mb-1">{m.phase}</p>
+                    <p className="text-xs font-mono text-muted-foreground mb-2">{m.phase}</p>
                     <h3 className="font-semibold text-sm">{m.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{m.desc}</p>
                   </motion.div>
                 ))}
               </div>
             </div>
 
-            {/* Mobile: vertical timeline */}
+            {/* Mobile: vertical card timeline */}
             <div className="md:hidden relative">
               <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
-              <div className="space-y-10">
+              <div className="space-y-6">
                 {ROADMAP.map((m, i) => (
                   <motion.div
                     key={m.phase}
@@ -661,7 +764,7 @@ export default function Home() {
                     custom={i}
                     className="relative pl-14"
                   >
-                    <div className="absolute left-[14px] top-1 -translate-x-1/2">
+                    <div className="absolute left-[14px] top-4 -translate-x-1/2">
                       {m.status === 'completed' && (
                         <CheckCircle2 className="size-5 text-primary" />
                       )}
@@ -672,9 +775,17 @@ export default function Home() {
                         <span className="block size-3 rounded-full bg-muted-foreground/30" />
                       )}
                     </div>
-                    <p className="text-xs font-mono text-muted-foreground mb-0.5">{m.phase}</p>
-                    <h3 className="font-semibold text-sm">{m.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{m.desc}</p>
+                    <div className={`rounded-lg border bg-card p-5 ${
+                      m.status === 'completed'
+                        ? 'border-primary/20 bg-primary/5'
+                        : m.status === 'active'
+                          ? 'border-primary/40 shadow-[0_0_15px_oklch(0.72_0.17_162/0.1)]'
+                          : 'opacity-70'
+                    }`}>
+                      <p className="text-xs font-mono text-muted-foreground mb-1">{m.phase}</p>
+                      <h3 className="font-semibold text-sm">{m.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.desc}</p>
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -967,6 +1078,99 @@ export default function Home() {
         </div>
       </SectionWrapper>
 
+      {/* ===== TEAM ===== */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Team"
+            title="Built by Cryptographers"
+            subtitle="A lean team of researchers and engineers building the future of private computation."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-16">
+            {TEAM_MEMBERS.map((member, i) => (
+              <motion.div
+                key={member.name}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+              >
+                <div className="size-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
+                  {member.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <h3 className="font-semibold text-base mt-4">{member.name}</h3>
+                <p className="text-xs font-mono text-primary uppercase tracking-wider mt-1">{member.role}</p>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{member.bio}</p>
+                <div className="flex items-center gap-4 mt-4">
+                  <a href={member.socials.x} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on X`}>
+                    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                  </a>
+                  <a href={member.socials.github} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={`${member.name} on GitHub`}>
+                    <Github className="size-3.5" />
+                  </a>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CONTACT ===== */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Contact"
+            title="Get in Touch"
+            subtitle="Have questions about integrating noVault? Our team is here to help."
+          />
+          <div className="mt-14 space-y-4">
+            <div>
+              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Name *</label>
+              <Input
+                placeholder="Your name"
+                value={contactForm.name}
+                onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                className="bg-card border-border w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Email *</label>
+              <Input
+                type="email"
+                placeholder="you@company.com"
+                value={contactForm.email}
+                onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                className="bg-card border-border w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Subject</label>
+              <Input
+                placeholder="What is this about?"
+                value={contactForm.subject}
+                onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
+                className="bg-card border-border w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Message *</label>
+              <Textarea
+                placeholder="Tell us about your project..."
+                value={contactForm.message}
+                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                className="bg-card border-border w-full min-h-[120px] resize-none"
+              />
+            </div>
+            <Button onClick={handleContact} disabled={contactSending} className="w-full sm:w-auto">
+              {contactSending ? 'Sending...' : 'Send Message'} <ArrowRight className="size-3.5" />
+            </Button>
+            <p className="text-xs text-muted-foreground">We typically respond within 24 hours.</p>
+          </div>
+        </div>
+      </section>
+
       {/* ===== FOOTER ===== */}
       <footer className="mt-auto border-t border-border bg-card/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
@@ -997,8 +1201,10 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Resources</h4>
               <ul className="space-y-2.5">
-                <li><span className="text-sm text-muted-foreground/50 cursor-default">Documentation</span></li>
-                <li><span className="text-sm text-muted-foreground/50 cursor-default">GitHub</span></li>
+                <li><a href='#developers' onClick={(e) => handleNavClick(e, '#developers')} className='text-sm text-muted-foreground hover:text-foreground transition-colors'>Documentation</a></li>
+                <li><a href='https://github.com/novaultech' target='_blank' rel='noopener noreferrer' className='text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'>
+                  <Github className='size-3.5' /> GitHub
+                </a></li>
                 <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
                 <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
               </ul>
