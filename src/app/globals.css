@@ -45,6 +45,23 @@
   --color-emerald-dim: #064e3b;
 }
 
+:root:not(.dark) {
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.13 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0 0);
+  --primary: oklch(0.55 0.17 162);
+  --border: oklch(0 0 0 / 10%);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.95 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0 0);
+  --input: oklch(0 0 0 / 15%);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.2 0 0);
+}
+
 :root {
   --radius: 0.625rem;
   --background: oklch(0.07 0.005 160);
@@ -303,4 +320,24 @@
 }
 .terminal-line {
   animation: terminal-fade 0.3s ease-out forwards;
+}
+
+/* S4: Section reveal with clip-path */
+.reveal-section {
+  clip-path: inset(0 0 4% 0);
+  transition: clip-path 0.8s ease-out;
+}
+.reveal-section.revealed {
+  clip-path: inset(0 0 0 0);
+}
+
+/* S5: Glow pulse animation for feature cards */
+@keyframes glow-pulse-once {
+  0% { box-shadow: 0 0 0px oklch(0.72 0.17 162 / 0); }
+  30% { box-shadow: 0 0 20px oklch(0.72 0.17 162 / 0.15); }
+  100% { box-shadow: 0 0 0px oklch(0.72 0.17 162 / 0); }
+}
+.glow-pulse-once {
+  animation: glow-pulse-once 1.5s ease-out forwards;
+  animation-delay: 0.5s;
 }

@@ -687,3 +687,123 @@ Priority Recommendations for Next Phase:
 10. Add a newsletter RSS feed integration in blog section
 11. Add animated progress bars in roadmap items
 12. Consider adding a dedicated careers/hiring section
+---
+Task ID: 8
+Agent: fullstack-developer
+Task: NoVault Round 8 Enhancement (S1-S7 Styling + F1-F5 Features)
+
+Work Log:
+- **S1**: Added page loading skeleton with `useState(true)` + 800ms timeout. Uses shadcn `Skeleton` component showing skeleton nav, hero text lines, and 3 skeleton cards.
+- **S1**: Added `Skeleton` import from `@/components/ui/skeleton`.
+- **S2**: Added `progress` field to ROADMAP data (completed=100, active=65, upcoming=0). Added animated progress bars using `motion.div` with `whileInView` width animation in both desktop and mobile roadmap cards.
+- **S3**: Created `pricingFadeUp` animation variant with scale (0.95→1) + fade + y translate. Applied to pricing cards with highlighted card getting +0.1 delay.
+- **S4**: Added `.reveal-section` and `.reveal-section.revealed` CSS classes with clip-path animation in globals.css. Created `useSectionReveal` hook using IntersectionObserver. Applied to Use Cases, Security, and FAQ sections.
+- **S5**: Added `.glow-pulse-once` CSS class and `@keyframes glow-pulse-once` animation in globals.css. Applied to FeatureCard inner div.
+- **S6**: Wrapped mobile Sheet nav links in `motion.div` with staggered children animation. Each link uses `mobileNavItem` variant with opacity + x translate + staggered delay.
+- **S7**: Changed hero third line from `text-4xl md:text-6xl lg:text-7xl text-muted-foreground` to `text-3xl md:text-5xl lg:text-6xl text-muted-foreground/70`. Changed SectionHeader h2 from `text-3xl md:text-4xl` to `text-2xl sm:text-3xl md:text-4xl`.
+- **F1**: Added Sun/Moon theme toggle button in navbar between ⌘K and Launch App. Toggle switches `dark` class on `document.documentElement` and persists to localStorage `novault-theme`. Added light theme CSS variables under `:root:not(.dark)` in globals.css.
+- **F2**: Added Careers section between Contact and Footer with 4 job listings (ZK Circuit Engineer, Protocol Researcher, DevRel Engineer, Smart Contract Auditor). Uses MapPin/Briefcase icons, Badge for department, flex layout with type badge. Added 'Careers' to CMD_PALETTE_ITEMS.
+- **F3**: Added Newsletter section between Backed By and Testimonials. Centered card with Mail icon, email input + subscribe button. Uses `newsletterEmail`/`newsletterSubmitted` state. Shows success with CheckCircle2 icon after submission. Validates email and shows toast.
+- **F4**: Added Developer Quickstart Guide between terminal animation and stats. Collapsible card with 4 numbered steps (Install SDK, Initialize vault, Encrypt and prove, Settle on-chain). Uses AnimatePresence for smooth open/close. ChevronDown/ChevronUp toggle icon.
+- **F5**: Added Security Audit Timeline between security stat counters and 4 security cards. 3 audit entries (Trail of Bits, OpenZeppelin, Zellic) in horizontally scrollable cards with auditor name, date, result, and green CheckCircle2 passed badge.
+- Imported new Lucide icons: Sun, Moon, MapPin, Briefcase, Mail, ChevronDown, ChevronUp.
+- Added `Careers` to CMD_PALETTE_ITEMS.
+- Fixed lint error: avoided calling setState inside useEffect for theme initialization by using lazy useState initializer reading from localStorage.
+- Verified: `bun run lint` passes with 0 errors.
+- Verified: `npx next build` compiles successfully.
+
+Stage Summary:
+- All 7 styling enhancements (S1-S7) implemented
+- All 5 new features (F1-F5) implemented
+- Lint: 0 errors, 0 warnings
+- Build: passes successfully
+- Files modified: `src/app/page.tsx`, `src/app/globals.css`
+
+---
+CURRENT PROJECT STATUS ASSESSMENT (Handover — Post Round 8)
+
+Overall Status: STABLE — Production-quality Web3 landing page with full backend
+- Build: ✅ PASS (0 errors, 0 warnings)
+- Lint: ✅ PASS (0 errors, 0 warnings)
+- Routes: 7 total (3 static + 4 API dynamic)
+- page.tsx: 2,985 lines
+- globals.css: 343 lines
+- API endpoints: 3 (/api/metrics GET, /api/contact POST, /api/waitlist POST+GET)
+- Database: Prisma/SQLite with Waitlist model
+- Generated images: 3 (logo, hero-bg, og-image)
+
+Completed Sections (39 total):
+1. Scroll progress indicator (2px emerald bar)
+2. Sticky navbar (active section, ⌘K, **theme toggle Sun/Moon**, 6 links, mobile Sheet with staggered animation)
+3. **Page loading skeleton** (Skeleton nav/hero/cards, 800ms)
+4. Hero — AI bg, interactive particles, orbs, Testnet badge, grid overlay, blur-in choreography, typewriter subtitle, CTA glow, **improved responsive typography**
+5. Marquee ticker bar
+6. Tech Stack bar
+7. Protocol Metrics Bar — LIVE API + activity graph, metric card hover lift
+8. Features — 6 cards with stagger, icon bounce, gradient borders, shimmer, **one-time glow pulse**
+9. Use Cases — 4-tab section, **clip-path reveal animation**
+10. Protocol — 3-step timeline with icons, pulse dots, inline code
+11. Architecture — 4-node data flow diagram with animated dashed connectors
+12. Roadmap — 4-phase cards with **animated progress bars** showing completion %
+13. Changelog — 3 version entries
+14. Blog — 3 preview cards with tag badges, dates, read times
+15. Developers — code block, line numbers, copy, scan-line, live terminal, **quickstart guide (collapsible 4 steps)**, animated counters, stat card hover lift
+16. Security — stat counters, **audit timeline** (Trail of Bits/OpenZeppelin/Zellic), 4-card grid, **clip-path reveal**
+17. FAQ — 6-item numbered Accordion, **clip-path reveal**
+18. Comparison Table — noVault vs competitors (5 rows)
+19. Waitlist — gradient card, email input, DB persistence, animated dotted border
+20. CTA — grid-bg, trust indicators, animated CTA glow
+21. Backed By — 6 partner cards with glassmorphism
+22. **Newsletter** — email subscribe with success state, Mail icon
+23. Testimonials — 3 cards with star ratings, glassmorphism
+24. Pricing — 3 tiers (Free/$49/Custom), Popular badge, **scale entrance animation**
+25. Team — 4 member cards with hover glow ring
+26. Contact — form POST to API
+27. **Careers** — 4 job listings (ZK Engineer, Researcher, DevRel, Auditor)
+28. Footer — 4-column, animated underline links, GitHub/Discord/Telegram, Terms/Privacy
+29. Terms of Service dialog
+30. Privacy Policy dialog
+31. Command Palette (⌘K) — now includes **Careers** + Pricing + Blog
+32. Back-to-top button
+33. Section dividers with emerald dots
+34. Custom text selection color
+35. Cookie consent banner — localStorage persistent
+36. Page load toast — simulated testnet proof notification
+37. Animated gradient section labels
+38. **Dark/Light theme toggle** — localStorage persistent, light mode CSS variables
+39. **Mobile Sheet staggered nav animation** — x-translate + opacity stagger
+
+New Interactive Elements (Round 8):
+- Page loading skeleton (shadcn Skeleton)
+- Roadmap animated progress bars (whileInView width)
+- Pricing card scale entrance (pricingFadeUp variant)
+- Section clip-path reveal (Use Cases, Security, FAQ)
+- Feature card one-time glow pulse on scroll
+- Mobile Sheet nav staggered slide-in
+- Hero 3rd line smaller responsive typography
+- Dark/Light theme toggle with localStorage
+- Careers section with 4 job cards
+- Newsletter subscribe with success state
+- Developer quickstart guide (collapsible AnimatePresence)
+- Security audit timeline (3 audits)
+
+Unresolved Issues:
+- Dev server watchdog needed in sandbox (start-dev.sh exists)
+- Platform Caddy proxy shows Z.ai placeholder (infrastructure, not code)
+- Contact form is simulated (no real email delivery)
+- Metrics API returns simulated data (no real database)
+- agent-browser cannot connect to localhost (sandbox network isolation)
+
+Priority Recommendations for Next Phase:
+1. Add proper favicon.ico (convert PNG to ICO format)
+2. Add Web3 wallet connection button (wagmi/viem)
+3. Add proper 404 page
+4. Performance: lazy-load below-fold sections with React.lazy
+5. Add internationalization (i18n) support
+6. Add real email service integration for contact form
+7. Add image optimization (WebP conversion, next/image priority hints)
+8. Add interactive SDK playground/sandbox section
+9. Add animated number counters for more sections
+10. Add a dedicated blog post detail view
+11. Consider adding a community stats sidebar widget
+12. Add proper sitemap.xml and robots.txt generation

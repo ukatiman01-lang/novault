@@ -28,6 +28,13 @@ import {
   Clock,
   Tag,
   TerminalSquare,
+  Sun,
+  Moon,
+  MapPin,
+  Briefcase,
+  Mail,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -54,6 +61,7 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Tabs,
@@ -102,6 +110,27 @@ const staggerItem = {
   },
 };
 
+/* S3: Pricing card entrance with scale */
+const pricingFadeUp = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { delay: i * 0.15, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
+  }),
+};
+
+/* S6: Mobile nav item animation */
+const mobileNavItem = {
+  hidden: { opacity: 0, x: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: { delay: 0.1 + i * 0.05, duration: 0.3 },
+  }),
+};
+
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -116,6 +145,22 @@ function useInView(threshold = 0.15) {
     return () => obs.disconnect();
   }, [threshold]);
   return { ref, inView };
+}
+
+/* S4: Section reveal hook */
+function useSectionReveal() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { el.classList.add('revealed'); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return ref;
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,24 +231,28 @@ const ROADMAP = [
     title: 'Testnet Launch',
     desc: 'Core ZK circuit library, encrypted state model, basic SDK',
     status: 'completed' as const,
+    progress: 100,
   },
   {
     phase: 'Phase 2',
     title: 'Developer Preview',
     desc: 'Full SDK release, Solidity integrations, documentation',
     status: 'completed' as const,
+    progress: 100,
   },
   {
     phase: 'Phase 3',
     title: 'Security Audits',
     desc: 'Independent audits by Trail of Bits and OpenZeppelin',
     status: 'active' as const,
+    progress: 65,
   },
   {
     phase: 'Phase 4',
     title: 'Mainnet Launch',
     desc: 'Production deployment, cross-chain bridges, governance',
     status: 'upcoming' as const,
+    progress: 0,
   },
 ];
 
@@ -395,6 +444,38 @@ const TESTIMONIALS = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  F4: Quickstart data                                               */
+/* ------------------------------------------------------------------ */
+
+const QUICKSTART = [
+  { step: 1, title: 'Install the SDK', code: 'npm install @novault/sdk' },
+  { step: 2, title: 'Initialize a vault', code: 'import { Vault } from "@novault/sdk";\nconst vault = new Vault({ network: "sepolia" });' },
+  { step: 3, title: 'Encrypt and prove', code: 'const proof = await vault.prove({\n  inputs: { amount: 100n },\n  circuit: "transfer"\n});' },
+  { step: 4, title: 'Settle on-chain', code: 'const tx = await vault.settle(proof);\nawait tx.wait();\n// Done \u2014 amount never revealed' },
+];
+
+/* ------------------------------------------------------------------ */
+/*  F5: Audit Timeline data                                           */
+/* ------------------------------------------------------------------ */
+
+const AUDIT_TIMELINE = [
+  { date: 'Jan 2025', auditor: 'Trail of Bits', result: '0 Critical, 0 High, 2 Medium', status: 'passed' as const },
+  { date: 'Mar 2025', auditor: 'OpenZeppelin', result: '0 Critical, 1 High, 3 Medium', status: 'passed' as const },
+  { date: 'Jun 2025', auditor: 'Zellic', result: '0 Critical, 0 High, 1 Medium', status: 'passed' as const },
+];
+
+/* ------------------------------------------------------------------ */
+/*  F2: Jobs data                                                     */
+/* ------------------------------------------------------------------ */
+
+const JOBS = [
+  { title: 'Senior ZK Circuit Engineer', location: 'Remote', type: 'Full-time', dept: 'Cryptography' },
+  { title: 'Protocol Researcher', location: 'Remote', type: 'Full-time', dept: 'Research' },
+  { title: 'Developer Relations Engineer', location: 'Remote / NYC', type: 'Full-time', dept: 'Community' },
+  { title: 'Smart Contract Auditor', location: 'Remote', type: 'Contract', dept: 'Security' },
+];
+
+/* ------------------------------------------------------------------ */
 /*  F4: Comparison data                                               */
 /* ------------------------------------------------------------------ */
 
@@ -436,6 +517,7 @@ const CMD_PALETTE_ITEMS = [
   { label: 'Compare', href: '#compare', type: 'scroll' as const },
   { label: 'Pricing', href: '#pricing', type: 'scroll' as const },
   { label: 'Blog', href: '#blog', type: 'scroll' as const },
+  { label: 'Careers', href: '#careers', type: 'scroll' as const },
   { label: 'Terms of Service', type: 'terms' as const },
   { label: 'Privacy Policy', type: 'privacy' as const },
 ];
@@ -491,6 +573,36 @@ const PRIVACY_CONTENT = (
 /* ------------------------------------------------------------------ */
 
 export default function Home() {
+  /* S1: Loading state */
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 800); return () => clearTimeout(t); }, []);
+
+  /* F1: Theme state */
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    try {
+      const saved = localStorage.getItem('novault-theme');
+      return saved === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      document.documentElement.classList.toggle('dark', next === 'dark');
+      try { localStorage.setItem('novault-theme', next); } catch {}
+      return next;
+    });
+  }, []);
+
+  /* F3: Newsletter state */
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+
+  /* F4: Quickstart state */
+  const [quickstartOpen, setQuickstartOpen] = useState(true);
+
   const [liveMetrics, setLiveMetrics] = useState<null | Record<string, unknown>>(null);
   const [termsOpen, setTermsOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -527,6 +639,11 @@ export default function Home() {
   const [terminalLineIdx, setTerminalLineIdx] = useState(0);
   const [terminalVisible, setTerminalVisible] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
+
+  /* S4: Section reveal refs */
+  const useCasesRef = useSectionReveal();
+  const securityRef = useSectionReveal();
+  const faqRef = useSectionReveal();
 
   // Expose dialog openers to window
   useEffect(() => {
@@ -744,6 +861,43 @@ export default function Home() {
     item.label.toLowerCase().includes(cmdPaletteSearch.toLowerCase())
   );
 
+  /* F3: Newsletter handler */
+  const handleNewsletter = useCallback(() => {
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    toast.success('Subscribed!', { description: 'You will receive our next monthly update.' });
+    setNewsletterSubmitted(true);
+    setNewsletterEmail('');
+  }, [newsletterEmail]);
+
+  /* S1: Loading skeleton */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <Skeleton className="h-16 w-full rounded-none bg-card/50" />
+          <div className="border-b border-border" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-32">
+          <div className="flex flex-col items-center gap-4">
+            <Skeleton className="h-12 w-1/2 bg-card/50 rounded-lg" />
+            <Skeleton className="h-12 w-2/3 bg-card/50 rounded-lg" />
+            <Skeleton className="h-12 w-1/3 bg-card/50 rounded-lg" />
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-48 bg-card/50 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative overflow-hidden flex flex-col min-h-screen">
       {/* ===== SCROLL PROGRESS BAR ===== */}
@@ -801,6 +955,10 @@ export default function Home() {
               <Search className="size-3" />
               <span className="font-mono">⌘K</span>
             </button>
+            {/* F1: Theme toggle */}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="ml-1" aria-label="Toggle theme">
+              {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </Button>
             <Button size="sm" className="ml-2">
               Launch App <ArrowRight className="size-3.5" />
             </Button>
@@ -820,22 +978,29 @@ export default function Home() {
                     no<span className="text-primary">Vault</span>
                   </SheetTitle>
                 </SheetHeader>
-                <div className="flex flex-col gap-1 px-4 mt-4">
-                  {NAV_LINKS.map((l) => (
-                    <a
+                <motion.div
+                  className="flex flex-col gap-1 px-4 mt-4"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.1 } } }}
+                >
+                  {NAV_LINKS.map((l, idx) => (
+                    <motion.a
                       key={l.href}
                       href={l.href}
                       onClick={(e) => handleNavClick(e, l.href)}
+                      variants={mobileNavItem}
+                      custom={idx}
                       className="px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent"
                     >
                       {l.label}
-                    </a>
+                    </motion.a>
                   ))}
                   <Separator className="my-2" />
                   <Button className="mt-1">
                     Launch App <ArrowRight className="size-3.5" />
                   </Button>
-                </div>
+                </motion.div>
               </SheetContent>
             </Sheet>
           </div>
@@ -925,7 +1090,7 @@ export default function Home() {
             <motion.span
               variants={heroFadeUp}
               custom={3}
-              className="block text-4xl md:text-6xl lg:text-7xl text-muted-foreground mt-1"
+              className="block text-3xl md:text-5xl lg:text-6xl text-muted-foreground/70 mt-1"
             >
               for the Next Internet
             </motion.span>
@@ -1133,7 +1298,7 @@ export default function Home() {
 
       {/* ===== USE CASES ===== */}
       <SectionDivider />
-      <section id="usecases" className="py-24 md:py-32">
+      <section id="usecases" ref={useCasesRef} className="py-24 md:py-32 reveal-section">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Use Cases"
@@ -1331,6 +1496,17 @@ export default function Home() {
                     <p className="text-xs font-mono text-muted-foreground mb-2">{m.phase}</p>
                     <h3 className="font-semibold text-sm">{m.title}</h3>
                     <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{m.desc}</p>
+                    {/* S2: Progress bar */}
+                    <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-primary rounded-full"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: m.progress + '%' }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1.2, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs font-mono text-muted-foreground">{m.progress}%</p>
                   </motion.div>
                 ))}
               </div>
@@ -1371,6 +1547,17 @@ export default function Home() {
                       <p className="text-xs font-mono text-muted-foreground mb-1">{m.phase}</p>
                       <h3 className="font-semibold text-sm">{m.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.desc}</p>
+                      {/* S2: Progress bar */}
+                      <div className="mt-3 h-1 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-primary rounded-full"
+                          initial={{ width: 0 }}
+                          whileInView={{ width: m.progress + '%' }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 1.2, ease: 'easeOut' }}
+                        />
+                      </div>
+                      <p className="mt-1.5 text-xs font-mono text-muted-foreground">{m.progress}%</p>
                     </div>
                   </motion.div>
                 ))}
@@ -1555,6 +1742,49 @@ export default function Home() {
             </motion.div>
           </div>
 
+          {/* F4: Quickstart Guide */}
+          <div className="mt-8">
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              <button
+                onClick={() => setQuickstartOpen(prev => !prev)}
+                className="w-full flex items-center justify-between px-5 py-4 text-sm font-semibold hover:bg-accent transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <TerminalSquare className="size-4 text-primary" />
+                  Quickstart Guide
+                </span>
+                {quickstartOpen ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+              </button>
+              <AnimatePresence initial={false}>
+                {quickstartOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-5 space-y-4">
+                      {QUICKSTART.map((item) => (
+                        <div key={item.step} className="flex items-start gap-4">
+                          <div className="shrink-0 size-7 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+                            {item.step}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium mb-2">{item.title}</p>
+                            <pre className="text-xs font-mono bg-muted/50 rounded p-3 overflow-x-auto leading-relaxed text-muted-foreground">
+                              {item.code}
+                            </pre>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
           {/* Stats with Animated Counter */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             {[
@@ -1583,7 +1813,7 @@ export default function Home() {
 
       {/* ===== SECURITY ===== */}
       <SectionDivider />
-      <section id="security" className="py-24 md:py-32 relative">
+      <section id="security" ref={securityRef} className="py-24 md:py-32 relative reveal-section">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,oklch(0.72_0.17_162/0.06),transparent)] pointer-events-none" />
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
           <SectionHeader
@@ -1617,6 +1847,34 @@ export default function Home() {
             ))}
           </div>
 
+          {/* F5: Security Audit Timeline */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="mb-10"
+          >
+            <p className="text-xs font-mono text-muted-foreground mb-4">Independent Audit Results</p>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {AUDIT_TIMELINE.map((audit) => (
+                <motion.div
+                  key={audit.auditor}
+                  variants={staggerItem}
+                  className="rounded-md border bg-card/50 p-4 shrink-0 min-w-[200px]"
+                >
+                  <h3 className="font-semibold text-sm">{audit.auditor}</h3>
+                  <p className="text-xs font-mono text-muted-foreground mt-1">{audit.date}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{audit.result}</p>
+                  <div className="mt-2 flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5 text-green-500" />
+                    <span className="text-xs font-mono text-green-500">Passed</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
           {/* Security cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {SECURITY_ITEMS.map((item, i) => (
@@ -1644,7 +1902,7 @@ export default function Home() {
       <SectionDivider />
 
       {/* ===== FAQ ===== */}
-      <section id="faq" className="py-24 md:py-32">
+      <section id="faq" ref={faqRef} className="py-24 md:py-32 reveal-section">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="FAQ"
@@ -1894,6 +2152,55 @@ export default function Home() {
         </div>
       </SectionWrapper>
 
+      {/* ===== F3: NEWSLETTER ===== */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Newsletter"
+            title="Stay in the Loop"
+            subtitle="Monthly updates on protocol development, new features, and community highlights."
+          />
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+            className="mt-14"
+          >
+            <div className="max-w-xl mx-auto rounded-lg border bg-card p-8 text-center">
+              {newsletterSubmitted ? (
+                <div className="flex flex-col items-center gap-3">
+                  <CheckCircle2 className="size-10 text-primary" />
+                  <p className="font-semibold text-lg">You are subscribed!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <Mail className="size-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-base">Get Monthly Updates</h3>
+                  <p className="text-sm text-muted-foreground mt-2">No spam. Unsubscribe anytime.</p>
+                  <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleNewsletter(); }}
+                      className="bg-background border-border flex-1 w-full sm:w-auto"
+                    />
+                    <Button onClick={handleNewsletter} className="w-full sm:w-auto whitespace-nowrap">
+                      Subscribe <ArrowRight className="size-3.5" />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ===== F2: TESTIMONIALS ===== */}
       <section className="py-24 md:py-32">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -1943,11 +2250,11 @@ export default function Home() {
             {PRICING.map((plan, i) => (
               <motion.div
                 key={plan.tier}
-                variants={fadeUp}
+                variants={pricingFadeUp}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                custom={i}
+                custom={plan.highlighted ? i + 0.1 : i}
                 className={`rounded-lg border p-6 flex flex-col ${
                   plan.highlighted
                     ? 'border-primary/40 bg-primary/5 shadow-[0_0_30px_oklch(0.72_0.17_162/0.08)] relative'
@@ -2069,6 +2376,53 @@ export default function Home() {
               {contactSending ? 'Sending...' : 'Send Message'} <ArrowRight className="size-3.5" />
             </Button>
             <p className="text-xs text-muted-foreground">We typically respond within 24 hours.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== F2: CAREERS ===== */}
+      <SectionDivider />
+      <section id="careers" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Careers"
+            title="Join the Protocol"
+            subtitle="We are building the future of private computation. Help us ship it."
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-16">
+            {JOBS.map((job, i) => (
+              <motion.div
+                key={job.title}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border bg-card p-5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <Badge variant="secondary" className="text-xs font-mono mb-2">{job.dept}</Badge>
+                    <h3 className="font-semibold text-sm">{job.title}</h3>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                      <MapPin className="size-3" />
+                      {job.location}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs font-mono text-muted-foreground border border-border rounded-md px-2 py-0.5">{job.type}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-10 text-center text-sm text-muted-foreground">
+            Don&rsquo;t see your role?{' '}
+            <a
+              href="#contact"
+              onClick={(e) => handleNavClick(e, '#contact')}
+              className="text-primary hover:underline"
+            >
+              Send us your resume
+            </a>
           </div>
         </div>
       </section>
@@ -2322,7 +2676,7 @@ function SectionHeader({ label, title, subtitle }: { label: string; title: strin
         whileInView="visible"
         viewport={{ once: true }}
         custom={1}
-        className="text-3xl md:text-4xl font-bold tracking-tight"
+        className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight"
       >
         {title}
       </motion.h2>
@@ -2354,7 +2708,7 @@ function FeatureCard({ icon: Icon, title, desc, index }: { icon: React.ElementTy
       <div className="absolute inset-0 rounded-lg overflow-hidden">
         <div className="animate-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
-      <div className="relative rounded-lg border border-border bg-card p-6">
+      <div className="relative rounded-lg border border-border bg-card p-6 glow-pulse-once">
         {/* Numbered indicator */}
         <span className="absolute top-6 left-6 text-xs font-mono text-muted-foreground/30 select-none">
           {String(index + 1).padStart(2, '0')}
