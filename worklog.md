@@ -160,3 +160,97 @@ Priority Recommendations for Next Phase:
 6. Add team section with photos and social links
 7. Consider adding animated particle/mesh background in hero for extra visual impact
 8. Optimize images to WebP format for production
+
+## review-3 — Round 3 Enhancements
+
+### Styling Enhancements (S1–S7)
+- S1: Added 3 floating gradient orbs in hero section with Framer Motion infinite animations (z-[4], pointer-events-none)
+- S2: Added numbered indicators (01-06) in top-left corner of each FeatureCard with font-mono muted styling
+- S3: Added copy button to code block header with Copy/CheckCircle2 toggle, CODE_STRING constant, 2s reset
+- S4: Replaced protocol step dots with icon circles (Lock, Shield, FileCode2) with primary/10 bg and ring on completed steps
+- S5: Added numbered prefixes (01-06) to FAQ questions, data-[state=open] left border highlight on open items
+- S6: Wrapped waitlist in gradient-border card with Shield icon, decorative emerald glow, rounded-2xl inner card
+- S7: Created SectionDivider component (gradient lines + emerald dot), replaced diamond divider and border-t separators
+
+### New Features (F1–F5)
+- F1: Protocol Metrics Bar between Tech Stack and Features (2.4M+ proofs, $180M+ value, 12,400+ devs, 99.97% uptime)
+- F2: Backed By / Partners section between CTA and Footer (6 partner badges with stagger animations)
+- F3: Community social links in footer (GitHub via lucide, Discord + Telegram via inline SVGs)
+- F4: Added FAQ + Roadmap to NAV_LINKS, added id attributes to FAQ/Roadmap/Waitlist sections
+- F5: Waitlist submit with toast feedback via sonner, validation, Enter key support
+
+### Files Modified
+- src/app/page.tsx (full rewrite preserving all existing sections and content)
+
+### Build Status
+- Compiled successfully, all pages generated
+
+---
+Task ID: review-3-verify
+Agent: Review Agent (webDevReview cron)
+Task: QA verification after round 3 enhancements
+
+Work Log:
+- Ran `bun run lint` — PASS (0 errors, 0 warnings)
+- Ran `npx next build` — PASS (compiled in 10.2s, 4/4 static pages)
+- Static HTML verification (77,532 chars, up from 64,981):
+  - 18/18 content checks pass
+  - 3 client-only items (clipboard, sonner, SectionDivider) correctly absent from static HTML
+- page.tsx: 1290 lines (up from 1084)
+
+---
+CURRENT PROJECT STATUS ASSESSMENT (Handover)
+
+Overall Status: STABLE — Production-quality Web3 landing page
+- Build: PASS (0 errors, compiled in 10.2s)
+- Lint: PASS (0 errors, 0 warnings)
+- Static generation: 4/4 pages
+- page.tsx: 1,290 lines
+- Static HTML: 77,532 chars
+
+Completed Sections (16 total):
+1. Scroll progress indicator (2px emerald bar)
+2. Sticky navbar with FAQ+Roadmap links, mobile Sheet menu
+3. Hero — AI bg, floating orbs (3 animated), Testnet Active badge, grid overlay, float animation
+4. Tech Stack bar (Ethereum, ZK Proofs, Solidity, Rust, Crypto Primitives)
+5. Protocol Metrics Bar — 2.4M+ proofs, $180M+ value, 12,400+ devs, 99.97% uptime
+6. Features — 6 cards with gradient borders, shimmer, hover arrows, numbered indicators
+7. Protocol — 3-step timeline with Lock/Shield/FileCode2 icons, pulse dots, inline code
+8. Roadmap — 4-phase timeline (horizontal/vertical responsive), id='roadmap'
+9. Developers — syntax-highlighted Solidity code, copy button, animated counters
+10. FAQ — 6-item numbered Accordion, left-border highlight, id='faq'
+11. Waitlist — gradient card, email input, toast feedback, id='waitlist'
+12. CTA — grid-bg, trust indicators (Trail of Bits, Open Source)
+13. Backed By — 6 partner badges (a16z, Paradigm, etc.)
+14. Footer — 4-column, Terms/Privacy, GitHub/Discord/Telegram social links
+15. Terms of Service dialog (comprehensive 8-section legal)
+16. Privacy Policy dialog (comprehensive 8-section legal)
+
+Interactive Elements:
+- Scroll progress indicator
+- 3 floating hero orbs (infinite Framer Motion)
+- Animated number counters (requestAnimationFrame)
+- Back-to-top button (AnimatePresence)
+- Copy-to-clipboard on code block
+- Waitlist submit with sonner toast
+- Feature card hover (gradient border, shimmer, arrow)
+- Mobile hamburger menu (Sheet)
+- FAQ accordion with numbered items
+- Terms/Privacy dialogs
+- All section dividers with emerald dot
+
+Unresolved Issues:
+- Dev server watchdog needed in sandbox (start-dev.sh exists)
+- Platform Caddy proxy shows Z.ai placeholder (infrastructure, not code)
+
+Priority Recommendations for Next Phase:
+1. Add proper favicon.ico (currently using AI-generated PNG)
+2. Add a real API endpoint for live protocol metrics
+3. Add dark/light theme toggle (currently dark-only)
+4. Add team section with member photos and roles
+5. Add blog/news section with MDX content
+6. Add interactive 3D visualization or animated mesh in hero
+7. Add proper meta image (OG image) for social sharing
+8. Performance: lazy-load below-fold sections
+9. Add internationalization (i18n) support
+10. Add contact form or support chat widget

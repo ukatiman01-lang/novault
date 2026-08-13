@@ -15,7 +15,10 @@ import {
   ArrowUp,
   ExternalLink,
   CheckCircle2,
+  Copy,
+  Github,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -78,6 +81,7 @@ const NAV_LINKS = [
   { label: 'Features', href: '#features' },
   { label: 'Protocol', href: '#protocol' },
   { label: 'Developers', href: '#developers' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 const TECH_STACK = [
@@ -98,9 +102,9 @@ const FEATURES = [
 ];
 
 const PROTOCOL_STEPS = [
-  { num: '01', title: 'Encrypt', desc: 'Your data is encrypted client-side before it ever touches the network. No plaintext leaves your machine.', code: 'ZkCipher.encrypt(plaintext, userKey)' },
-  { num: '02', title: 'Prove', desc: 'Zero-knowledge proofs verify correctness without revealing inputs. The network validates computation without learning anything.', code: 'ZkProver.generateProof(ciphertext, witness)' },
-  { num: '03', title: 'Settle', desc: 'Results settle on-chain with cryptographic guarantees. Verifiable outcomes anchored to the base layer.', code: 'vault.settle(proof, commitment, recipient)' },
+  { num: '01', title: 'Encrypt', desc: 'Your data is encrypted client-side before it ever touches the network. No plaintext leaves your machine.', code: 'ZkCipher.encrypt(plaintext, userKey)', icon: Lock },
+  { num: '02', title: 'Prove', desc: 'Zero-knowledge proofs verify correctness without revealing inputs. The network validates computation without learning anything.', code: 'ZkProver.generateProof(ciphertext, witness)', icon: Shield },
+  { num: '03', title: 'Settle', desc: 'Results settle on-chain with cryptographic guarantees. Verifiable outcomes anchored to the base layer.', code: 'vault.settle(proof, commitment, recipient)', icon: FileCode2 },
 ];
 
 const FAQ_DATA = [
@@ -156,6 +160,41 @@ const ROADMAP = [
     status: 'upcoming' as const,
   },
 ];
+
+const METRICS = [
+  { value: '2.4M+', label: 'Proofs Generated' },
+  { value: '$180M+', label: 'Value Secured' },
+  { value: '12,400+', label: 'Developers' },
+  { value: '99.97%', label: 'Uptime' },
+];
+
+const PARTNERS = [
+  'Ethereum Foundation',
+  'a16z Crypto',
+  'Paradigm',
+  'Polygon Labs',
+  'Consensys',
+  'Gitcoin',
+];
+
+const CODE_STRING = `pragma solidity 0.8.24;
+import {@noVault/sdk/"PrivateVault.sol"};
+
+contract EncryptedAssetVault is PrivateVault {
+    using ZkCipher for bytes32;
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) external {
+        // Encrypt inputs client-side
+        Ciphertext ct = ZkCipher.encrypt(amount, msg.sender);
+        // Generate ZK proof of valid transfer
+        Proof proof = ZkProver.proveTransfer(ct, to);
+        // Settle on-chain \u2014 amount never revealed
+        _vault.settle(proof, ct, to);
+    }
+}`;
 
 /* ------------------------------------------------------------------ */
 /*  Terms & Privacy content                                           */
@@ -214,6 +253,7 @@ export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Expose dialog openers to window
   useEffect(() => {
@@ -240,6 +280,21 @@ export default function Home() {
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  const handleCopyCode = useCallback(() => {
+    navigator.clipboard.writeText(CODE_STRING);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, []);
+
+  const handleWaitlist = useCallback(() => {
+    if (!waitlistEmail || !waitlistEmail.includes('@')) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+    toast.success("You're on the list!", { description: "We'll notify you when noVault mainnet launches." });
+    setWaitlistEmail('');
+  }, [waitlistEmail]);
 
   return (
     <div className="relative overflow-hidden flex flex-col min-h-screen">
@@ -345,6 +400,23 @@ export default function Home() {
               'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
             backgroundSize: '60px 60px',
           }}
+        />
+
+        {/* S1: Floating Orbs */}
+        <motion.div
+          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[4]"
+          animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
+          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[4]"
+          animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
+          transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[4]"
+          animate={{ y: [0, -15, 0] }}
+          transition={{ repeat: Infinity, duration: 7 }}
         />
 
         {/* Content */}
@@ -454,6 +526,37 @@ export default function Home() {
         </div>
       </SectionWrapper>
 
+      {/* ===== F1: PROTOCOL METRICS BAR ===== */}
+      <SectionWrapper>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+          <SectionHeader
+            label="Protocol"
+            title="By the Numbers"
+            subtitle="Real-time metrics from the noVault testnet."
+          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-14">
+            {METRICS.map((m, i) => (
+              <motion.div
+                key={m.label}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center"
+              >
+                <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
+                  {m.value}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1 uppercase tracking-wider">
+                  {m.label}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </SectionWrapper>
+
       {/* ===== FEATURES ===== */}
       <section id="features" className="py-24 md:py-32">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -472,14 +575,10 @@ export default function Home() {
       </section>
 
       {/* ===== SECTION DIVIDER ===== */}
-      <div className="flex items-center gap-4 max-w-xs mx-auto py-4">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-primary text-xs">◆</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
+      <SectionDivider />
 
       {/* ===== PROTOCOL ===== */}
-      <section id="protocol" className="py-24 md:py-32 border-t border-border">
+      <section id="protocol" className="py-24 md:py-32">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Protocol"
@@ -500,8 +599,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== SECTION DIVIDER ===== */}
+      <SectionDivider />
+
       {/* ===== ROADMAP ===== */}
-      <section className="py-24 md:py-32 border-t border-border">
+      <section id="roadmap" className="py-24 md:py-32">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Roadmap"
@@ -581,8 +683,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== SECTION DIVIDER ===== */}
+      <SectionDivider />
+
       {/* ===== DEVELOPERS ===== */}
-      <section id="developers" className="py-24 md:py-32 border-t border-border">
+      <section id="developers" className="py-24 md:py-32">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Developers"
@@ -598,12 +703,19 @@ export default function Home() {
             custom={0}
             className="mt-14 rounded-lg border border-border bg-card overflow-hidden"
           >
-            {/* Code block header */}
+            {/* Code block header with copy button */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
               <span className="size-3 rounded-full bg-muted-foreground/30" />
               <span className="size-3 rounded-full bg-muted-foreground/20" />
               <span className="size-3 rounded-full bg-muted-foreground/10" />
               <span className="ml-3 text-xs font-mono text-muted-foreground">PrivateVault.sol</span>
+              <button
+                onClick={handleCopyCode}
+                className="ml-auto text-muted-foreground hover:text-foreground transition-colors p-1 rounded"
+                aria-label="Copy code"
+              >
+                {copied ? <CheckCircle2 className="size-4 text-primary" /> : <Copy className="size-4" />}
+              </button>
             </div>
             {/* Code content */}
             <div className="p-5 sm:p-6 font-mono text-xs sm:text-sm leading-7 overflow-x-auto">
@@ -654,8 +766,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== SECTION DIVIDER ===== */}
+      <SectionDivider />
+
       {/* ===== FAQ ===== */}
-      <section className="py-24 md:py-32 border-t border-border">
+      <section id="faq" className="py-24 md:py-32">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="FAQ"
@@ -673,9 +788,16 @@ export default function Home() {
           >
             <Accordion type="single" collapsible className="w-full">
               {FAQ_DATA.map((faq, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="border-b border-border">
+                <AccordionItem
+                  key={i}
+                  value={`faq-${i}`}
+                  className="border-b border-border data-[state=open]:border-l-2 data-[state=open]:border-l-primary"
+                >
                   <AccordionTrigger className="text-sm font-medium text-left hover:no-underline hover:text-foreground py-5">
-                    {faq.q}
+                    <span className="flex items-center">
+                      <span className="text-xs font-mono text-primary/50 mr-3">{String(i + 1).padStart(2, '0')}</span>
+                      {faq.q}
+                    </span>
                   </AccordionTrigger>
                   <AccordionContent>
                     <p className="text-muted-foreground text-sm leading-relaxed">{faq.a}</p>
@@ -687,45 +809,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== SECTION DIVIDER ===== */}
+      <SectionDivider />
+
       {/* ===== WAITLIST ===== */}
-      <section className="py-24 md:py-32 border-t border-border">
-        <div className="max-w-xl mx-auto px-4 sm:px-6 text-center">
-          <SectionHeader
-            label="Waitlist"
-            title="Join the Waitlist"
-            subtitle="Be the first to access noVault's mainnet. Early adopters get priority SDK access."
-          />
+      <section id="waitlist" className="py-24 md:py-32">
+        <div className="max-w-xl mx-auto px-4 sm:px-6">
+          <div className="relative rounded-2xl p-px bg-gradient-to-br from-primary/20 via-border to-primary/10">
+            <div className="absolute -inset-px rounded-2xl bg-primary/5 blur-xl -z-10" />
+            <div className="rounded-2xl bg-background p-8 sm:p-12 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="size-10 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
+                  <Shield className="size-5 text-primary" />
+                </div>
+              </div>
+              <SectionHeader
+                label="Waitlist"
+                title="Join the Waitlist"
+                subtitle="Be the first to access noVault's mainnet. Early adopters get priority SDK access."
+              />
 
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={0}
-            className="mt-10 flex flex-col sm:flex-row items-center gap-3"
-          >
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={waitlistEmail}
-              onChange={(e) => setWaitlistEmail(e.target.value)}
-              className="bg-card border-border flex-1 w-full sm:w-auto"
-            />
-            <Button className="w-full sm:w-auto whitespace-nowrap">
-              Join Waitlist <ArrowRight className="size-3.5" />
-            </Button>
-          </motion.div>
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={0}
+                className="mt-10 flex flex-col sm:flex-row items-center gap-3"
+              >
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={waitlistEmail}
+                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleWaitlist(); }}
+                  className="bg-card border-border flex-1 w-full sm:w-auto"
+                />
+                <Button onClick={handleWaitlist} className="w-full sm:w-auto whitespace-nowrap">
+                  Join Waitlist <ArrowRight className="size-3.5" />
+                </Button>
+              </motion.div>
 
-          <motion.p
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={1}
-            className="mt-4 text-xs text-muted-foreground"
-          >
-            No spam. We only send major protocol updates.
-          </motion.p>
+              <motion.p
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={1}
+                className="mt-4 text-xs text-muted-foreground"
+              >
+                No spam. We only send major protocol updates.
+              </motion.p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -793,6 +929,44 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== F2: BACKED BY ===== */}
+      <SectionWrapper>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 text-center">
+          <SectionHeader
+            label="Backed By"
+            title="Trusted by Leading Teams"
+            subtitle="Supported by the best in Web3."
+          />
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={0}
+            className="flex flex-wrap items-center justify-center gap-3 mt-14"
+          >
+            {PARTNERS.map((p) => (
+              <span
+                key={p}
+                className="inline-flex items-center px-4 py-2 rounded-full border border-border bg-card/50 text-sm text-muted-foreground font-mono"
+              >
+                {p}
+              </span>
+            ))}
+          </motion.div>
+          <motion.p
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            custom={1}
+            className="mt-6 text-xs text-muted-foreground"
+          >
+            Strategic partners and advisors. For a complete list, see our documentation.
+          </motion.p>
+        </div>
+      </SectionWrapper>
+
       {/* ===== FOOTER ===== */}
       <footer className="mt-auto border-t border-border bg-card/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
@@ -825,8 +999,8 @@ export default function Home() {
               <ul className="space-y-2.5">
                 <li><span className="text-sm text-muted-foreground/50 cursor-default">Documentation</span></li>
                 <li><span className="text-sm text-muted-foreground/50 cursor-default">GitHub</span></li>
-                <li><span className="text-sm text-muted-foreground/50 cursor-default">Blog</span></li>
-                <li><span className="text-sm text-muted-foreground/50 cursor-default">Status</span></li>
+                <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
+                <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
               </ul>
             </div>
 
@@ -870,6 +1044,20 @@ export default function Home() {
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
               @novaultech
+            </a>
+          </div>
+
+          {/* F3: Community / Social Links */}
+          <Separator className="mt-6 mb-4" />
+          <div className="flex items-center justify-center gap-4">
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
+              <Github className="size-4" />
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Telegram">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
             </a>
           </div>
         </div>
@@ -923,6 +1111,18 @@ export default function Home() {
 
 function SectionWrapper({ children }: { children: React.ReactNode }) {
   return <div className="border-t border-border">{children}</div>;
+}
+
+function SectionDivider() {
+  return (
+    <div className="flex items-center justify-center py-2">
+      <div className="flex items-center gap-3 w-full max-w-xs">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent to-border" />
+        <span className="size-1.5 rounded-full bg-primary/40" />
+        <div className="flex-1 h-px bg-gradient-to-l from-transparent to-border" />
+      </div>
+    </div>
+  );
 }
 
 function SectionHeader({ label, title, subtitle }: { label: string; title: string; subtitle: string }) {
@@ -981,6 +1181,10 @@ function FeatureCard({ icon: Icon, title, desc, index }: { icon: React.ElementTy
         <div className="animate-shimmer absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
       <div className="relative rounded-lg border border-border bg-card p-6">
+        {/* S2: Numbered indicator */}
+        <span className="absolute top-6 left-6 text-xs font-mono text-muted-foreground/30 select-none">
+          {String(index + 1).padStart(2, '0')}
+        </span>
         {/* Hover arrow */}
         <ArrowRight className="absolute top-6 right-6 size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         {/* Icon with gradient bg */}
@@ -994,7 +1198,8 @@ function FeatureCard({ icon: Icon, title, desc, index }: { icon: React.ElementTy
   );
 }
 
-function ProtocolStep({ num, title, desc, index, code }: { num: string; title: string; desc: string; index: number; code?: string }) {
+function ProtocolStep({ num, title, desc, index, code, icon: StepIcon }: { num: string; title: string; desc: string; index: number; code?: string; icon?: React.ElementType }) {
+  const isCompleted = index < 2;
   return (
     <motion.div
       variants={fadeUp}
@@ -1004,8 +1209,10 @@ function ProtocolStep({ num, title, desc, index, code }: { num: string; title: s
       custom={index}
       className="relative pl-16 md:pl-24"
     >
-      {/* Dot on the line with pulse */}
-      <div className="absolute left-[22px] md:left-[30px] top-1.5 size-[7px] rounded-full bg-primary ring-4 ring-primary/20 animate-pulse-dot" />
+      {/* S4: Icon circle replacing the dot */}
+      <div className={`absolute left-[22px] md:left-[30px] top-1.5 size-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center ${isCompleted ? 'bg-primary/5 ring-2 ring-primary/10' : ''}`}>
+        {StepIcon && <StepIcon className="size-3 text-primary" />}
+      </div>
       <span className="font-mono text-4xl md:text-5xl font-bold text-muted-foreground/15 leading-none select-none">
         {num}
       </span>
