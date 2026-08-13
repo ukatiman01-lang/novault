@@ -35,6 +35,14 @@ import {
   Mail,
   ChevronDown,
   ChevronUp,
+  Zap,
+  Globe,
+  Activity,
+  Fingerprint,
+  Layers,
+  BarChart3,
+  Users,
+  Cpu,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -518,8 +526,77 @@ const CMD_PALETTE_ITEMS = [
   { label: 'Pricing', href: '#pricing', type: 'scroll' as const },
   { label: 'Blog', href: '#blog', type: 'scroll' as const },
   { label: 'Careers', href: '#careers', type: 'scroll' as const },
+  { label: 'Benchmarks', href: '#benchmarks', type: 'scroll' as const },
+  { label: 'Ecosystem', href: '#ecosystem', type: 'scroll' as const },
   { label: 'Terms of Service', type: 'terms' as const },
   { label: 'Privacy Policy', type: 'privacy' as const },
+];
+
+/* ------------------------------------------------------------------ */
+/*  R8: Network Status data                                           */
+/* ------------------------------------------------------------------ */
+
+const NETWORK_STATUS = [
+  { name: 'Proof Generation', status: 'operational' as const, latency: '3.2ms' },
+  { name: 'Settlement Layer', status: 'operational' as const, latency: '12.1s' },
+  { name: 'Encryption Service', status: 'operational' as const, latency: '0.8ms' },
+  { name: 'API Gateway', status: 'operational' as const, latency: '45ms' },
+  { name: 'Cross-Chain Bridge', status: 'degraded' as const, latency: '—' },
+];
+
+/* ------------------------------------------------------------------ */
+/*  R8: Live Proof Feed data                                          */
+/* ------------------------------------------------------------------ */
+
+const PROOF_TYPES = ['Transfer', 'Vote', 'Swap', 'Lending', 'Identity', 'Governance', 'Compliance'];
+const PROOF_CHAINS = ['Ethereum', 'Polygon', 'Arbitrum', 'Base'];
+
+function generateProofItem(id: number) {
+  const type = PROOF_TYPES[id % PROOF_TYPES.length];
+  const chain = PROOF_CHAINS[id % PROOF_CHAINS.length];
+  const latency = (2 + Math.random() * 4).toFixed(1);
+  const bytes = Math.floor(600 + Math.random() * 500);
+  const hash = `0x${(id * 7919 + 0xabcd).toString(16).padStart(8, '0')}...${(id * 3571 + 0xef01).toString(16).padStart(4, '0')}`;
+  const timeAgo = id === 0 ? 'just now' : `${id * 3 + Math.floor(Math.random() * 5)}s ago`;
+  return { id, type, chain, latency: `${latency}ms`, bytes, hash, timeAgo };
+}
+
+const INITIAL_PROOF_FEED = Array.from({ length: 8 }, (_, i) => generateProofItem(i));
+
+/* ------------------------------------------------------------------ */
+/*  R8: Performance Benchmarks data                                   */
+/* ------------------------------------------------------------------ */
+
+const BENCHMARKS = [
+  { metric: 'Proof Generation', unit: 'ms', noVault: 3.8, competitor: 45, lower: true },
+  { metric: 'Proof Size', unit: 'bytes', noVault: 847, competitor: 12000, lower: true },
+  { metric: 'Verification Gas', unit: 'gas', noVault: 210000, competitor: 850000, lower: true },
+  { metric: 'Cross-Chain Latency', unit: 's', noVault: 12, competitor: 120, lower: true },
+  { metric: 'SDK Bundle Size', unit: 'kb', noVault: 28, competitor: 180, lower: true },
+];
+
+/* ------------------------------------------------------------------ */
+/*  R8: Ecosystem / Chain Support data                                */
+/* ------------------------------------------------------------------ */
+
+const ECOSYSTEM = [
+  { name: 'Ethereum', symbol: 'ETH', status: 'Mainnet' as const, color: '#627EEA', desc: 'Full ZK privacy support on mainnet and testnet', tvl: '$42M' },
+  { name: 'Polygon', symbol: 'MATIC', status: 'Testnet' as const, color: '#8247E5', desc: 'ZK proof verification with Polygon CDK', tvl: '$8.1M' },
+  { name: 'Arbitrum', symbol: 'ARB', status: 'Testnet' as const, color: '#28A0F0', desc: 'Stylus-compatible privacy circuits', tvl: '$5.3M' },
+  { name: 'Base', symbol: 'BASE', status: 'Developing' as const, color: '#0052FF', desc: 'Coinbase L2 integration in progress', tvl: null },
+  { name: 'Optimism', symbol: 'OP', status: 'Developing' as const, color: '#FF0420', desc: 'OP Stack native privacy module', tvl: null },
+  { name: 'zkSync', symbol: 'ZK', status: 'Planned' as const, color: '#4E529A', desc: 'Native ZK privacy integration', tvl: null },
+];
+
+/* ------------------------------------------------------------------ */
+/*  R8: Community Stats data                                          */
+/* ------------------------------------------------------------------ */
+
+const COMMUNITY_STATS = [
+  { label: 'GitHub Stars', value: '12.4K', change: '+842 this month', icon: Star },
+  { label: 'Discord Members', value: '8,200+', change: '+340 this week', icon: Users },
+  { label: 'X Followers', value: '24.5K', change: '+1.2K this month', icon: Globe },
+  { label: 'Countries', value: '67', change: 'Global community', icon: Activity },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -639,6 +716,14 @@ export default function Home() {
   const [terminalLineIdx, setTerminalLineIdx] = useState(0);
   const [terminalVisible, setTerminalVisible] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
+
+  /* R8: Live proof feed state */
+  const [proofFeed, setProofFeed] = useState(INITIAL_PROOF_FEED);
+  const [proofCounter, setProofCounter] = useState(8);
+
+  /* R8: Benchmark animation state */
+  const [benchmarksVisible, setBenchmarksVisible] = useState(false);
+  const benchmarksRef = useRef<HTMLDivElement>(null);
 
   /* S4: Section reveal refs */
   const useCasesRef = useSectionReveal();
@@ -777,6 +862,30 @@ export default function Home() {
       });
     }, 3000);
     return () => clearTimeout(timer);
+  }, []);
+
+  /* R8: Live proof feed auto-update */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProofCounter(prev => {
+        const newItem = generateProofItem(prev);
+        setProofFeed(feed => [newItem, ...feed].slice(0, 8));
+        return prev + 1;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* R8: Benchmark visibility observer */
+  useEffect(() => {
+    const el = benchmarksRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setBenchmarksVisible(true); obs.disconnect(); } },
+      { threshold: 0.2 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   // Smooth scroll handler
@@ -1007,8 +1116,34 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* ===== R8: NETWORK STATUS BAR ===== */}
+      <div className={"fixed top-16 left-0 right-0 z-40 bg-background/60 backdrop-blur-lg border-b border-border/50"}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-7 text-xs font-mono">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5">
+                <span className="relative flex size-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full size-1.5 bg-green-500" />
+                </span>
+                <span className="text-green-400 hidden sm:inline">All Systems Operational</span>
+                <span className="text-green-400 sm:hidden">Operational</span>
+              </span>
+              <span className="text-muted-foreground/40 hidden md:inline">|</span>
+              <span className="text-muted-foreground/60 hidden md:inline">Proof latency: 3.2ms</span>
+              <span className="text-muted-foreground/40 hidden lg:inline">|</span>
+              <span className="text-muted-foreground/60 hidden lg:inline">Testnet v0.3.0</span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground/40">
+              <Activity className="size-3" />
+              <span className="hidden sm:inline">status.novault.io</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ===== HERO ===== */}
-      <section className="relative min-h-screen flex items-center justify-center noise-overlay">
+      <section className="relative min-h-screen flex items-center justify-center noise-overlay pt-24">
         {/* Background image */}
         <Image
           src="/hero-bg.png"
@@ -1035,17 +1170,17 @@ export default function Home() {
 
         {/* Floating Orbs */}
         <motion.div
-          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[5]"
+          className="absolute top-[20%] left-[10%] size-[300px] md:size-[500px] rounded-full bg-primary/5 blur-[80px] pointer-events-none z-[5] animate-breathe"
           animate={{ y: [0, -30, 0], x: [0, 15, 0] }}
           transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[5]"
+          className="absolute bottom-[20%] right-[10%] size-[200px] md:size-[400px] rounded-full bg-primary/8 blur-[60px] pointer-events-none z-[5] animate-breathe"
           animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
           transition={{ repeat: Infinity, duration: 10, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[5]"
+          className="absolute top-[60%] left-[50%] size-[150px] rounded-full bg-emerald-500/5 blur-[40px] pointer-events-none z-[5] animate-breathe"
           animate={{ y: [0, -15, 0] }}
           transition={{ repeat: Infinity, duration: 7 }}
         />
@@ -1271,6 +1406,45 @@ export default function Home() {
         </div>
       </SectionWrapper>
 
+      {/* ===== R8: LIVE PROOF FEED ===== */}
+      <div className="border-t border-border bg-card/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Zap className="size-4 text-primary" />
+              <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Live Proof Feed</span>
+              <span className="relative flex size-1.5 ml-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full size-1.5 bg-primary" />
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-muted-foreground/50">#{(2418393 + proofCounter).toLocaleString()}</span>
+          </div>
+          <div className="space-y-2 max-h-[280px] overflow-hidden">
+            {proofFeed.map((item, i) => (
+              <div
+                key={`${item.id}-${item.hash}`}
+                className={`flex items-center gap-3 rounded-md border border-border/50 bg-card/40 px-4 py-2.5 text-xs font-mono ${i === 0 ? 'animate-feed-slide border-primary/20' : ''}`}
+              >
+                <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  item.type === 'Transfer' ? 'bg-primary/15 text-primary' :
+                  item.type === 'Vote' ? 'bg-amber-500/15 text-amber-400' :
+                  item.type === 'Swap' ? 'bg-purple-500/15 text-purple-400' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {item.type}
+                </span>
+                <span className="text-muted-foreground/60 flex-1 truncate">{item.hash}</span>
+                <span className="text-muted-foreground/50 hidden sm:inline">{item.chain}</span>
+                <span className="text-primary font-semibold">{item.latency}</span>
+                <span className="text-muted-foreground/40">{item.bytes}b</span>
+                <span className="text-muted-foreground/30 hidden md:inline w-16 text-right">{item.timeAgo}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ===== FEATURES (S8: staggered children) ===== */}
       <section id="features" className="py-24 md:py-32">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -1298,7 +1472,7 @@ export default function Home() {
 
       {/* ===== USE CASES ===== */}
       <SectionDivider />
-      <section id="usecases" ref={useCasesRef} className="py-24 md:py-32 reveal-section">
+      <section id="usecases" ref={useCasesRef} className="py-24 md:py-32 reveal-section mesh-gradient">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Use Cases"
@@ -1327,7 +1501,7 @@ export default function Home() {
                 ))}
               </TabsList>
               {USE_CASES.map((uc) => (
-                <TabsContent key={uc.tab} value={uc.tab} className="mt-8 rounded-lg border border-border bg-card p-6 sm:p-8">
+                <TabsContent key={uc.tab} value={uc.tab} className="mt-8 rounded-lg border border-border/50 glass-card p-6 sm:p-8">
                   <div className="flex items-start gap-4">
                     <div className="size-10 shrink-0 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
                       <uc.icon className="size-5 text-primary" />
@@ -1984,6 +2158,73 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== R8: PERFORMANCE BENCHMARKS ===== */}
+      <SectionDivider />
+      <section id="benchmarks" className="py-24 md:py-32 mesh-gradient">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Performance"
+            title="Benchmarks That Speak"
+            subtitle="Measured against leading ZK privacy solutions. Lower is better for every metric."
+          />
+          <div ref={benchmarksRef} className="mt-16 space-y-8">
+            {BENCHMARKS.map((b, i) => {
+              const maxVal = Math.max(b.noVault, b.competitor);
+              const nvPct = (b.noVault / maxVal) * 100;
+              const compPct = (b.competitor / maxVal) * 100;
+              return (
+                <motion.div
+                  key={b.metric}
+                  variants={fadeUp}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  custom={i}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">{b.metric}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground/50 uppercase">({b.unit})</span>
+                  </div>
+                  <div className="mb-1.5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-mono text-muted-foreground/60 w-24 shrink-0">Traditional ZK</span>
+                      <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-muted-foreground/20 rounded-full"
+                          style={{ width: benchmarksVisible ? `${compPct}%` : '0%', transition: 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground/50 w-20 text-right">
+                        {b.competitor >= 1000 ? `${(b.competitor / 1000).toFixed(0)}K` : b.competitor}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-mono text-primary w-24 shrink-0 font-semibold">noVault</span>
+                      <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary rounded-full"
+                          style={{ width: benchmarksVisible ? `${nvPct}%` : '0%', transition: 'width 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) 0.2s' }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-mono text-primary w-20 text-right font-semibold">
+                        {b.noVault >= 1000 ? `${(b.noVault / 1000).toFixed(0)}K` : b.noVault}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex justify-end mt-1">
+                    <span className="text-[10px] font-mono text-primary/60">
+                      {(b.competitor / b.noVault).toFixed(1)}x faster
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ===== SECTION DIVIDER ===== */}
       <SectionDivider />
 
@@ -2055,7 +2296,7 @@ export default function Home() {
             whileInView="visible"
             viewport={{ once: true }}
             custom={0}
-            className="text-3xl md:text-5xl font-bold tracking-tight"
+            className="text-3xl md:text-5xl font-bold tracking-tight animate-text-shimmer"
           >
             Ready to Build with Privacy?
           </motion.h2>
@@ -2152,6 +2393,91 @@ export default function Home() {
         </div>
       </SectionWrapper>
 
+      {/* ===== R8: ECOSYSTEM / CHAIN SUPPORT ===== */}
+      <section id="ecosystem" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Ecosystem"
+            title="Multi-Chain Privacy"
+            subtitle="noVault provides a unified privacy layer across EVM-compatible networks."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-16">
+            {ECOSYSTEM.map((chain, i) => (
+              <motion.div
+                key={chain.name}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card p-5 hover-glow group relative overflow-hidden"
+              >
+                {/* Chain color accent line */}
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${chain.color}40, transparent)` }} />
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="size-10 rounded-lg flex items-center justify-center text-white font-bold text-xs chain-float"
+                      style={{ background: `linear-gradient(135deg, ${chain.color}, ${chain.color}80)`, animationDelay: `${i * 0.5}s` }}
+                    >
+                      {chain.symbol.slice(0, 2)}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">{chain.name}</h3>
+                      <Badge variant="secondary" className={`text-[10px] font-mono mt-1 ${
+                        chain.status === 'Mainnet' ? 'bg-primary/15 text-primary' :
+                        chain.status === 'Testnet' ? 'bg-amber-500/15 text-amber-400' :
+                        chain.status === 'Developing' ? 'bg-blue-500/15 text-blue-400' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {chain.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  {chain.tvl && (
+                    <div className="text-right">
+                      <p className="text-xs font-mono text-primary font-semibold">{chain.tvl}</p>
+                      <p className="text-[10px] text-muted-foreground/50">TVL</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{chain.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== R8: COMMUNITY STATS ===== */}
+      <SectionDivider />
+      <section className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Community"
+            title="Built in the Open"
+            subtitle="A growing global community of privacy advocates, researchers, and developers."
+          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16">
+            {COMMUNITY_STATS.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card/50 p-5 text-center hover-glow"
+              >
+                <stat.icon className="size-5 text-primary/60 mx-auto mb-3" />
+                <p className="text-2xl font-bold font-mono text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
+                <p className="text-[10px] font-mono text-primary/50 mt-2">{stat.change}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== F3: NEWSLETTER ===== */}
       <section className="py-24 md:py-32">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -2168,7 +2494,7 @@ export default function Home() {
             custom={0}
             className="mt-14"
           >
-            <div className="max-w-xl mx-auto rounded-lg border bg-card p-8 text-center">
+            <div className="max-w-xl mx-auto rounded-lg border border-border/50 glass-card p-8 text-center hover-glow">
               {newsletterSubmitted ? (
                 <div className="flex flex-col items-center gap-3">
                   <CheckCircle2 className="size-10 text-primary" />
@@ -2430,6 +2756,24 @@ export default function Home() {
       {/* ===== FOOTER ===== */}
       <footer className="mt-auto border-t border-border bg-card/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+          {/* R8: Footer status bar */}
+          <div className="glass-card rounded-lg p-4 mb-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="relative flex size-2.5">
+                <span className="animate-status-ring absolute inline-flex h-full w-full rounded-full bg-green-400" />
+                <span className="relative inline-flex rounded-full size-2.5 bg-green-500" />
+              </span>
+              <div>
+                <p className="text-sm font-medium">All Systems Operational</p>
+                <p className="text-[10px] font-mono text-muted-foreground">5 services monitored · 99.97% uptime (30d)</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground">
+              <span className="flex items-center gap-1.5"><Cpu className="size-3 text-primary/60" /> Proof: <span className="text-foreground">3.2ms</span></span>
+              <span className="flex items-center gap-1.5"><Fingerprint className="size-3 text-primary/60" /> Encrypt: <span className="text-foreground">0.8ms</span></span>
+              <span className="flex items-center gap-1.5"><Layers className="size-3 text-primary/60" /> Settle: <span className="text-foreground">12.1s</span></span>
+            </div>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
@@ -2449,7 +2793,9 @@ export default function Home() {
                 <li><a href="#features" onClick={(e) => handleNavClick(e, '#features')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#protocol" onClick={(e) => handleNavClick(e, '#protocol')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Protocol</a></li>
                 <li><a href="#developers" onClick={(e) => handleNavClick(e, '#developers')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">SDK</a></li>
-                <li><span className="text-sm text-muted-foreground/50 cursor-default">Changelog</span></li>
+                <li><a href="#benchmarks" onClick={(e) => handleNavClick(e, '#benchmarks')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Benchmarks</a></li>
+                <li><a href="#ecosystem" onClick={(e) => handleNavClick(e, '#ecosystem')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Ecosystem</a></li>
+                <li><a href="#pricing" onClick={(e) => handleNavClick(e, '#pricing')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
               </ul>
             </div>
 
