@@ -25,6 +25,9 @@ import {
   Star,
   Database,
   User,
+  Clock,
+  Tag,
+  TerminalSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -69,6 +72,17 @@ const fadeUp = {
     opacity: 1,
     y: 0,
     transition: { delay: i * 0.12, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
+  }),
+};
+
+/* S1: Hero entrance choreography variant */
+const heroFadeUp = {
+  hidden: { opacity: 0, y: 40, filter: 'blur(8px)' },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { delay: i * 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   }),
 };
 
@@ -319,6 +333,47 @@ const TYPEWRITER_PHRASES = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  F2: Pricing data                                                  */
+/* ------------------------------------------------------------------ */
+
+const PRICING = [
+  { tier: 'Explorer', price: 'Free', period: '', desc: 'For individual developers exploring privacy primitives.', features: ['Up to 1,000 proofs/month', 'Testnet access', 'Community support', 'Basic SDK', 'Public documentation'], cta: 'Start Free', highlighted: false },
+  { tier: 'Builder', price: '$49', period: '/mo', desc: 'For teams building production privacy applications.', features: ['Unlimited proofs', 'Mainnet access', 'Priority support', 'Full SDK + plugins', 'Private Slack channel', 'Custom circuit templates'], cta: 'Get Started', highlighted: true },
+  { tier: 'Enterprise', price: 'Custom', period: '', desc: 'For organizations requiring institutional-grade privacy.', features: ['Dedicated proving network', 'SLA guarantees', '24/7 support', 'Custom integrations', 'On-premise deployment', 'Formal verification reports'], cta: 'Contact Sales', highlighted: false },
+];
+
+/* ------------------------------------------------------------------ */
+/*  F3: Blog data                                                     */
+/* ------------------------------------------------------------------ */
+
+const BLOG_POSTS = [
+  { title: 'Announcing noVault v0.3: Developer Preview', excerpt: 'Today we are releasing the full developer preview of noVault, including our TypeScript SDK, Solidity integration library, and interactive documentation.', date: 'Jun 12, 2025', readTime: '5 min read', tag: 'Release' },
+  { title: 'How Zero-Knowledge Proofs Enable Private DeFi', excerpt: 'A deep dive into the cryptographic primitives behind noVault and how they enable a new class of private financial applications on Ethereum.', date: 'May 28, 2025', readTime: '8 min read', tag: 'Technical' },
+  { title: 'Our Security Audit Journey with Trail of Bits', excerpt: 'A transparent look at our 3-month security audit process, findings, and how we achieved zero critical vulnerabilities.', date: 'Apr 15, 2025', readTime: '6 min read', tag: 'Security' },
+];
+
+/* ------------------------------------------------------------------ */
+/*  F4: Terminal animation data                                       */
+/* ------------------------------------------------------------------ */
+
+const TERMINAL_LINES = [
+  { type: 'system', text: '$ novault prove --circuit transfer --input encrypted_state.json' },
+  { type: 'success', text: '✓ Circuit compiled (2.1ms)' },
+  { type: 'system', text: '→ Generating witness...' },
+  { type: 'success', text: '✓ Witness generated (0.8ms)' },
+  { type: 'system', text: '→ Creating ZK proof...' },
+  { type: 'success', text: '✓ Proof generated (3.2ms) — 847 bytes' },
+  { type: 'success', text: '✓ Proof verified on-chain — tx: 0x7f3a...e2c1' },
+  { type: 'dim', text: '' },
+  { type: 'system', text: '$ novault status' },
+  { type: 'info', text: '  Network:  testnet (Sepolia)' },
+  { type: 'info', text: '  Proofs:   2,418,392 generated' },
+  { type: 'info', text: '  Uptime:   99.97%' },
+  { type: 'dim', text: '' },
+  { type: 'prompt', text: '$ _' },
+];
+
+/* ------------------------------------------------------------------ */
 /*  F1: Architecture nodes                                            */
 /* ------------------------------------------------------------------ */
 
@@ -379,6 +434,8 @@ const CMD_PALETTE_ITEMS = [
   { label: 'Contact', href: '#contact', type: 'scroll' as const },
   { label: 'Architecture', href: '#architecture', type: 'scroll' as const },
   { label: 'Compare', href: '#compare', type: 'scroll' as const },
+  { label: 'Pricing', href: '#pricing', type: 'scroll' as const },
+  { label: 'Blog', href: '#blog', type: 'scroll' as const },
   { label: 'Terms of Service', type: 'terms' as const },
   { label: 'Privacy Policy', type: 'privacy' as const },
 ];
@@ -457,6 +514,19 @@ export default function Home() {
   /* F3: Command Palette state */
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [cmdPaletteSearch, setCmdPaletteSearch] = useState('');
+
+  /* F1: Cookie consent state */
+  const [cookieConsent, setCookieConsent] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('novault-cookies') === 'accepted';
+    } catch {
+      return false;
+    }
+  });
+  const [terminalLineIdx, setTerminalLineIdx] = useState(0);
+  const [terminalVisible, setTerminalVisible] = useState(false);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
   // Expose dialog openers to window
   useEffect(() => {
@@ -552,6 +622,45 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [cmdPaletteOpen]);
+
+  /* F4: Terminal IntersectionObserver */
+  useEffect(() => {
+    const el = terminalRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setTerminalVisible(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  /* F4: Terminal line increment */
+  useEffect(() => {
+    if (!terminalVisible) return;
+    if (terminalLineIdx >= TERMINAL_LINES.length) return;
+    const timer = setInterval(() => {
+      setTerminalLineIdx(prev => {
+        if (prev >= TERMINAL_LINES.length - 1) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 600);
+    return () => clearInterval(timer);
+  }, [terminalVisible, terminalLineIdx]);
+
+  /* F5: Notification toast on page load */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      toast.info('New proof verified on testnet', {
+        description: 'Transfer proof #2,418,393 settled in 3.1ms',
+        duration: 5000,
+      });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Smooth scroll handler
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
@@ -784,7 +893,7 @@ export default function Home() {
         >
           {/* Testnet Active Badge */}
           <motion.div
-            variants={fadeUp}
+            variants={heroFadeUp}
             initial="hidden"
             animate="visible"
             custom={0}
@@ -800,21 +909,21 @@ export default function Home() {
             className="font-bold tracking-tight leading-[1.08]"
           >
             <motion.span
-              variants={fadeUp}
+              variants={heroFadeUp}
               custom={1}
               className="block text-4xl md:text-6xl lg:text-7xl"
             >
               Private-by-Default
             </motion.span>
             <motion.span
-              variants={fadeUp}
+              variants={heroFadeUp}
               custom={2}
               className="block text-4xl md:text-6xl lg:text-7xl bg-gradient-to-r from-primary via-emerald-300 to-primary bg-clip-text text-transparent mt-1"
             >
               Infrastructure
             </motion.span>
             <motion.span
-              variants={fadeUp}
+              variants={heroFadeUp}
               custom={3}
               className="block text-4xl md:text-6xl lg:text-7xl text-muted-foreground mt-1"
             >
@@ -824,7 +933,7 @@ export default function Home() {
 
           {/* S1: Typewriter subtitle */}
           <motion.p
-            variants={fadeUp}
+            variants={heroFadeUp}
             initial="hidden"
             animate="visible"
             custom={4}
@@ -837,7 +946,7 @@ export default function Home() {
 
           {/* S3: CTA buttons with animated gradient border */}
           <motion.div
-            variants={fadeUp}
+            variants={heroFadeUp}
             initial="hidden"
             animate="visible"
             custom={5}
@@ -944,7 +1053,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center"
+                className="rounded-lg border border-border bg-card/50 p-4 sm:p-6 text-center hover:-translate-y-1 hover:shadow-[0_4px_20px_oklch(0.72_0.17_162/0.08)] transition-all duration-300"
               >
                 <div className="text-xl sm:text-2xl font-bold font-mono text-primary">
                   {m.value}
@@ -1311,6 +1420,45 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== F3: BLOG ===== */}
+      <SectionDivider />
+      <section id="blog" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Blog"
+            title="Latest from noVault"
+            subtitle="Stay up to date with our latest releases, research, and security updates."
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
+            {BLOG_POSTS.map((post, i) => (
+              <motion.div
+                key={post.title}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+              >
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs font-mono mb-4">
+                  <Tag className="size-3 mr-1" />
+                  {post.tag}
+                </Badge>
+                <h3 className="font-semibold text-base leading-snug">{post.title}</h3>
+                <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{post.excerpt}</p>
+                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{post.date}</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="size-3" />
+                    {post.readTime}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== SECTION DIVIDER ===== */}
       <SectionDivider />
 
@@ -1368,6 +1516,45 @@ export default function Home() {
             </div>
           </motion.div>
 
+          {/* F4: Live Terminal Animation */}
+          <div ref={terminalRef} className="mt-8">
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={4}
+              className="rounded-lg border border-border bg-card overflow-hidden"
+            >
+              {/* Terminal header */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
+                <span className="size-3 rounded-full bg-muted-foreground/30" />
+                <span className="size-3 rounded-full bg-muted-foreground/20" />
+                <span className="size-3 rounded-full bg-muted-foreground/10" />
+                <span className="ml-3 text-xs font-mono text-muted-foreground flex items-center gap-1.5">
+                  <TerminalSquare className="size-3" />
+                  noVault Terminal
+                </span>
+              </div>
+              {/* Terminal content */}
+              <div className="p-4 font-mono text-xs sm:text-sm leading-6 min-h-[200px] bg-background">
+                {TERMINAL_LINES.slice(0, terminalLineIdx + 1).map((line, li) => (
+                  <div
+                    key={li}
+                    className={`terminal-line ${
+                      line.type === 'success' ? 'text-primary' :
+                      line.type === 'info' ? 'text-muted-foreground' :
+                      line.type === 'dim' ? 'text-muted-foreground/40' :
+                      'text-foreground'
+                    }`}
+                  >
+                    {line.text || ' '}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+
           {/* Stats with Animated Counter */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
             {[
@@ -1382,7 +1569,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i + 1}
-                className="rounded-lg border border-border bg-card p-6 text-center"
+                className="rounded-lg border border-border bg-card p-6 text-center hover:-translate-y-1 hover:shadow-[0_4px_20px_oklch(0.72_0.17_162/0.08)] transition-all duration-300"
               >
                 <div className="text-2xl sm:text-3xl font-bold font-mono text-primary">
                   <AnimatedCounter target={s.value} prefix={s.prefix} suffix={s.suffix} />
@@ -1545,9 +1732,10 @@ export default function Home() {
       {/* ===== WAITLIST ===== */}
       <section id="waitlist" className="py-24 md:py-32">
         <div className="max-w-xl mx-auto px-4 sm:px-6">
-          <div className="relative rounded-2xl p-px bg-gradient-to-br from-primary/20 via-border to-primary/10">
+          <div className="relative rounded-2xl p-px bg-gradient-to-br from-primary/20 via-border to-primary/10 overflow-hidden">
             <div className="absolute -inset-px rounded-2xl bg-primary/5 blur-xl -z-10" />
-            <div className="rounded-2xl bg-background p-8 sm:p-12 text-center">
+            <div className="absolute inset-0 rounded-2xl animate-border-dance opacity-20 pointer-events-none" />
+            <div className="relative rounded-2xl bg-background p-8 sm:p-12 text-center">
               <div className="flex justify-center mb-4">
                 <div className="size-10 rounded-md bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center">
                   <Shield className="size-5 text-primary" />
@@ -1687,7 +1875,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] text-sm text-muted-foreground/50 hover:text-foreground transition-colors duration-300 font-mono cursor-default"
+                className="inline-flex items-center px-5 py-3 rounded-lg border border-border bg-card/60 backdrop-blur-sm hover:border-primary/30 hover:bg-card/60 transition-all duration-300 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.05)] text-sm text-muted-foreground/50 hover:text-foreground transition-colors duration-300 font-mono cursor-default"
               >
                 {p}
               </motion.span>
@@ -1723,7 +1911,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+                className="rounded-lg border border-border bg-card/60 backdrop-blur-sm p-6 hover:border-primary/30 transition-colors duration-300"
               >
                 {/* Star rating */}
                 <div className="flex items-center gap-0.5 mb-4">
@@ -1736,6 +1924,56 @@ export default function Home() {
                   <p className="text-sm font-semibold">{t.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{t.role}, {t.company}</p>
                 </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== F2: PRICING ===== */}
+      <SectionDivider />
+      <section id="pricing" className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <SectionHeader
+            label="Pricing"
+            title="Simple, Transparent Pricing"
+            subtitle="Start free. Scale as you grow. No hidden fees."
+          />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-16">
+            {PRICING.map((plan, i) => (
+              <motion.div
+                key={plan.tier}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i}
+                className={`rounded-lg border p-6 flex flex-col ${
+                  plan.highlighted
+                    ? 'border-primary/40 bg-primary/5 shadow-[0_0_30px_oklch(0.72_0.17_162/0.08)] relative'
+                    : 'border-border bg-card'
+                }`}
+              >
+                {plan.highlighted && (
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-mono">Popular</Badge>
+                )}
+                <h3 className="font-semibold text-base">{plan.tier}</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-3xl font-bold font-mono text-primary">{plan.price}</span>
+                  {plan.period && <span className="text-sm text-muted-foreground">{plan.period}</span>}
+                </div>
+                <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{plan.desc}</p>
+                <ul className="mt-6 space-y-2.5 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button className="mt-8 w-full" variant={plan.highlighted ? 'default' : 'outline'}>
+                  {plan.cta} <ArrowRight className="size-3.5" />
+                </Button>
               </motion.div>
             ))}
           </div>
@@ -1759,7 +1997,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 transition-colors duration-300"
+                className="rounded-lg border border-border bg-card p-6 hover:border-primary/30 hover:shadow-[0_0_20px_oklch(0.72_0.17_162/0.15)] transition-shadow duration-500 transition-colors duration-300"
               >
                 <div className="size-12 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-sm">
                   {member.name.split(' ').map(n => n[0]).join('')}
@@ -1854,9 +2092,9 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Product</h4>
               <ul className="space-y-2.5">
-                <li><a href="#features" onClick={(e) => handleNavClick(e, '#features')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#protocol" onClick={(e) => handleNavClick(e, '#protocol')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Protocol</a></li>
-                <li><a href="#developers" onClick={(e) => handleNavClick(e, '#developers')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">SDK</a></li>
+                <li><a href="#features" onClick={(e) => handleNavClick(e, '#features')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#protocol" onClick={(e) => handleNavClick(e, '#protocol')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Protocol</a></li>
+                <li><a href="#developers" onClick={(e) => handleNavClick(e, '#developers')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">SDK</a></li>
                 <li><span className="text-sm text-muted-foreground/50 cursor-default">Changelog</span></li>
               </ul>
             </div>
@@ -1865,12 +2103,12 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Resources</h4>
               <ul className="space-y-2.5">
-                <li><a href='#developers' onClick={(e) => handleNavClick(e, '#developers')} className='text-sm text-muted-foreground hover:text-foreground transition-colors'>Documentation</a></li>
-                <li><a href='https://github.com/novaultech' target='_blank' rel='noopener noreferrer' className='text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'>
+                <li><a href='#developers' onClick={(e) => handleNavClick(e, '#developers')} className='footer-link text-sm text-muted-foreground hover:text-foreground transition-colors'>Documentation</a></li>
+                <li><a href='https://github.com/novaultech' target='_blank' rel='noopener noreferrer' className='footer-link text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5'>
                   <Github className='size-3.5' /> GitHub
                 </a></li>
-                <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
-                <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
+                <li><a href="#faq" onClick={(e) => handleNavClick(e, '#faq')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
+                <li><a href="#roadmap" onClick={(e) => handleNavClick(e, '#roadmap')} className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors">Roadmap</a></li>
               </ul>
             </div>
 
@@ -1881,7 +2119,7 @@ export default function Home() {
                 <li>
                   <button
                     onClick={() => setTermsOpen(true)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Terms of Service
                   </button>
@@ -1889,7 +2127,7 @@ export default function Home() {
                 <li>
                   <button
                     onClick={() => setPrivacyOpen(true)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="footer-link text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Privacy Policy
                   </button>
@@ -1988,6 +2226,43 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
+      {/* ===== F1: COOKIE CONSENT BANNER ===== */}
+      <AnimatePresence>
+        {!cookieConsent && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-0 left-0 right-0 z-[55] bg-card/95 backdrop-blur-xl border-t border-border"
+          >
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground text-center sm:text-left">
+                We use essential cookies only. No tracking. No ads. Your privacy is our protocol.
+              </p>
+              <div className="flex items-center gap-3 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPrivacyOpen(true)}
+                >
+                  Learn More
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    try { localStorage.setItem('novault-cookies', 'accepted'); } catch {}
+                    setCookieConsent(true);
+                  }}
+                >
+                  Accept
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ===== BACK TO TOP ===== */}
       <AnimatePresence>
         {showBackToTop && (
@@ -2037,7 +2312,7 @@ function SectionHeader({ label, title, subtitle }: { label: string; title: strin
         whileInView="visible"
         viewport={{ once: true }}
         custom={0}
-        className="text-xs font-mono uppercase tracking-widest text-primary mb-4"
+        className="text-xs font-mono uppercase tracking-widest bg-gradient-to-r from-primary via-emerald-300 to-primary bg-clip-text text-transparent bg-[length:200%_auto] animate-[gradient-text_4s_ease-in-out_infinite] mb-4"
       >
         {label}
       </motion.p>

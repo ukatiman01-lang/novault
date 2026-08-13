@@ -260,3 +260,47 @@
   );
   animation: cta-glow-spin 3s linear infinite;
 }
+
+/* S3: Animated gradient text for SectionHeader labels */
+@keyframes gradient-text {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+/* S5: Animated dotted border for waitlist card */
+@keyframes border-dance {
+  to { background-position: 100% 100%; }
+}
+.animate-border-dance {
+  background-image: radial-gradient(circle, oklch(0.72 0.17 162 / 0.5) 1px, transparent 1px);
+  background-size: 12px 12px;
+  animation: border-dance 8s linear infinite;
+}
+
+/* S6: Footer link hover underline animation */
+.footer-link {
+  position: relative;
+}
+.footer-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: oklch(0.72 0.17 162);
+  transition: width 0.3s ease;
+}
+.footer-link:hover::after {
+  width: 100%;
+}
+
+/* F4: Terminal line fade-in animation */
+@keyframes terminal-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.terminal-line {
+  animation: terminal-fade 0.3s ease-out forwards;
+}
