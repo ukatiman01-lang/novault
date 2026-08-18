@@ -1,4 +1,3 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next/standalone"
+  "buildCommand": "prisma generate && next build"
 }
